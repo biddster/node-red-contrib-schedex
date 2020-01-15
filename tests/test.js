@@ -564,7 +564,7 @@ describe('schedex', function() {
         console.log(duration);
         assert.strictEqual(Math.round(duration), 59);
     });
-    it('should send correct sync_state', function() {
+    it('#67 should send correct send_state', function() {
         let node = newNode({
             ontime: moment()
                 .subtract(10, 'minute')
@@ -575,7 +575,7 @@ describe('schedex', function() {
             onpayload: 'onpayload',
             ontopic: 'ontopic'
         });
-        node.emit('input', { payload: 'sync_state' });
+        node.emit('input', { payload: 'send_state' });
         assert(node.sent(0).payload.indexOf('onpayload') === 0, 'on payload not received');
         assert(node.sent(0).topic.indexOf('ontopic') === 0, 'on topic not received');
 
@@ -589,7 +589,7 @@ describe('schedex', function() {
             offpayload: 'offpayload',
             offtopic: 'offtopic'
         });
-        node.emit('input', { payload: 'sync_state' });
+        node.emit('input', { payload: 'send_state' });
         assert(node.sent(0).payload.indexOf('offpayload') === 0, 'off payload not received');
         assert(node.sent(0).topic.indexOf('offtopic') === 0, 'off topic not received');
     });

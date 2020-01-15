@@ -293,7 +293,7 @@ module.exports = function(RED) {
                 } else if (msg.payload === 'toggle') {
                     handled = true;
                     send(inverse(lastEvent), true);
-                } else if (msg.payload === 'sync_state') {
+                } else if (msg.payload === 'send_state') {
                     handled = true;
                     if (!isSuspended()) {
                         const isOff = events.off.moment.isAfter(events.on.moment);
