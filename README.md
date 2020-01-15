@@ -82,6 +82,7 @@ You can wire inject nodes to the input of this node and send the following in `m
 | `toggle`     | Triggers either the manual on or manual off mode. If the last event was the on event, toggle will cause schedex to emit the off event and vice versa. State is not maintained over restarts and deploys. Schedex assumes off upon start so the first toggle will emit the on event. |
 | `info`       | Schedex emits an object containing the on and off times in UTC format. It also contains the state which is either on or off along with the rest of this node's configuration.                                                                                                       |
 | `info_local` | Schedex emits an object containing the on and off times in local ISO format. It also contains the state which is either on or off along with the rest of this node's configuration.                                                                                                 |
+| `send_state` | Causes Schedex to emit the current state as a message with either the on or off topic/payload set. If Schedex is suspended, this command emits nothing.                                                                                                                             |
 
 ## Programmatic Control
 
