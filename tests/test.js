@@ -614,4 +614,33 @@ describe('schedex', function() {
             done();
         }, 60000 * 3);
     });
+    it('should send correct sync_state', function() {
+        let node = newNode({
+            ontime: moment()
+                .subtract(10, 'minute')
+                .format('HH:mm'),
+            offtime: moment()
+                .add(10, 'minute')
+                .format('HH:mm'),
+            onpayload: 'onpayload',
+            ontopic: 'ontopic'
+        });
+        node.emit('input', { payload: 'sync_state' });
+        assert(node.sent(0).payload.indexOf('onpayload') === 0, 'on payload not received');
+        assert(node.sent(0).topic.indexOf('ontopic') === 0, 'on topic not received');
+
+        node = newNode({
+            ontime: moment()
+                .add(10, 'minute')
+                .format('HH:mm'),
+            offtime: moment()
+                .subtract(10, 'minute')
+                .format('HH:mm'),
+            offpayload: 'offpayload',
+            offtopic: 'offtopic'
+        });
+        node.emit('input', { payload: 'sync_state' });
+        assert(node.sent(0).payload.indexOf('offpayload') === 0, 'off payload not received');
+        assert(node.sent(0).topic.indexOf('offtopic') === 0, 'off topic not received');
+    });
 });
