@@ -296,13 +296,11 @@ module.exports = function(RED) {
                 } else if (msg.payload === 'sync_state') {
                     handled = true;
                     if (!isSuspended()) {
-                        const payload = events.off.moment.isAfter(events.on.moment)
-                            ? events.off.payload
-                            : events.on.payload;
-                        const topic = events.off.moment.isAfter(events.on.moment)
-                            ? events.off.topic
-                            : events.on.topic;
-                        node.send({ topic, payload });
+                        const isOff = events.off.moment.isAfter(events.on.moment);
+                        node.send({
+                            topic: isOff ? events.off.topic : events.on.topic,
+                            payload: isOff ? events.off.payload : events.on.payload
+                        });
                     }
                 } else if (msg.payload === 'info' || msg.payload === 'info_local') {
                     handled = true;
