@@ -205,6 +205,106 @@ function testInfoCommand(infoCommand, dateFormatter) {
 }
 
 describe('schedex', function() {
+    it('issue#66 info command should work with single on or off command', function() {
+        const now = moment('2019-12-13 11:00:00.000');
+        let node = newNode({
+            ontime: '10:00',
+            offtime: ''
+        });
+        node.now = function() {
+            return now.clone();
+        };
+        // Trigger some events so the node recalculates the on time
+        node.emit('input', { payload: { suspended: true } });
+        node.emit('input', { payload: { suspended: false } });
+        node.emit('input', { payload: 'info' });
+
+        assert.strictEqual(
+            '2019-12-14T10:00:00.000Z',
+            node.schedexEvents().on.moment.toISOString()
+        );
+        assert.strictEqual(node.schedexEvents().off.moment, null);
+
+        assert.deepStrictEqual(node.sent(0), {
+            payload: {
+                name: 'test-node',
+                fri: true,
+                lat: 51.5050793,
+                lon: -0.1225863,
+                mon: true,
+                off: '',
+                offoffset: '5',
+                offpayload: 'off payload',
+                offrandomoffset: true,
+                offtime: '',
+                offtopic: 'off topic',
+                on: 'Sat, 14 Dec 2019 10:00:00 GMT',
+                onoffset: '',
+                onpayload: 'on payload',
+                onrandomoffset: false,
+                ontime: '10:00',
+                ontopic: 'on topic',
+                sat: true,
+                state: 'on',
+                sun: true,
+                suspended: false,
+                thu: true,
+                tue: true,
+                wed: true
+            },
+            topic: 'info'
+        });
+
+        node = newNode({
+            ontime: '',
+            offtime: '10:00',
+            offoffset: '',
+            offrandomoffset: false
+        });
+        node.now = function() {
+            return now.clone();
+        };
+        // Trigger some events so the node recalculates the on time
+        node.emit('input', { payload: { suspended: true } });
+        node.emit('input', { payload: { suspended: false } });
+        node.emit('input', { payload: 'info' });
+
+        assert.strictEqual(
+            '2019-12-14T10:00:00.000Z',
+            node.schedexEvents().off.moment.toISOString()
+        );
+        assert.strictEqual(node.schedexEvents().on.moment, null);
+
+        assert.deepStrictEqual(node.sent(0), {
+            payload: {
+                name: 'test-node',
+                fri: true,
+                lat: 51.5050793,
+                lon: -0.1225863,
+                mon: true,
+                off: 'Sat, 14 Dec 2019 10:00:00 GMT',
+                offoffset: '',
+                offpayload: 'off payload',
+                offrandomoffset: false,
+                offtime: '10:00',
+                offtopic: 'off topic',
+                on: '',
+                onoffset: '',
+                onpayload: 'on payload',
+                onrandomoffset: false,
+                ontime: '',
+                ontopic: 'on topic',
+                sat: true,
+                state: 'off',
+                sun: true,
+                suspended: false,
+                thu: true,
+                tue: true,
+                wed: true
+            },
+            topic: 'info'
+        });
+    });
     it('issue#64 ability to schedule once a week', function() {
         const now = moment('2019-12-13 11:00:00.000');
         const node = newNode({

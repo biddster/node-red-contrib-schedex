@@ -311,15 +311,29 @@ module.exports = function(RED) {
                         payload.on = 'suspended';
                         payload.off = 'suspended';
                     } else {
-                        payload.state = events.off.moment.isAfter(events.on.moment)
-                            ? 'off'
-                            : 'on';
+                        if (events.on.moment && events.off.moment) {
+                            payload.state = events.off.moment.isAfter(events.on.moment)
+                                ? 'off'
+                                : 'on';
+                        } else if (events.on.moment) {
+                            payload.state = 'on';
+                        } else {
+                            payload.state = 'off';
+                        }
                         if (msg.payload === 'info') {
-                            payload.on = events.on.moment.toDate().toUTCString();
-                            payload.off = events.off.moment.toDate().toUTCString();
+                            payload.on = events.on.moment
+                                ? events.on.moment.toDate().toUTCString()
+                                : '';
+                            payload.off = events.off.moment
+                                ? events.off.moment.toDate().toUTCString()
+                                : '';
                         } else if (msg.payload === 'info_local') {
-                            payload.on = events.on.moment.toISOString(true);
-                            payload.off = events.off.moment.toISOString(true);
+                            payload.on = events.on.moment
+                                ? events.on.moment.toISOString(true)
+                                : '';
+                            payload.off = events.off.moment
+                                ? events.off.moment.toISOString(true)
+                                : '';
                         }
                     }
                     node.send({ topic: 'info', payload });
