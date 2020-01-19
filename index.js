@@ -245,9 +245,11 @@ module.exports = function(RED) {
             event.name = eventName.toUpperCase();
             event.shape = shape;
             event.callback = function() {
-                send(event);
+                // #66 Order here is important as we need to schedule the next event
+                // before calling send as send calls setStatus. setStatus needs the
+                // latest event details so the node label is correct.
                 schedule(event, true);
-                setStatus(Status.FIRED, { event, manual: false });
+                send(event, false);
             };
             return event;
         }
