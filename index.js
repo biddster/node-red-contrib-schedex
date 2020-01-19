@@ -308,7 +308,7 @@ module.exports = function(RED) {
                     payload.actuatedstate = null;
                     if (lastEvent) {
                         payload.actuatedstate =
-                            lastEvent.topic === events.on.ontopic ? 'on' : 'off';
+                            lastEvent.topic === events.on.topic ? 'on' : 'off';
                     }
                     payload.name = config.name;
                     if (isSuspended()) {

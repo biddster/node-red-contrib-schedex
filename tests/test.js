@@ -92,8 +92,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
     node.emit('input', {
         payload: infoCommand
     });
-    const sent = node.sent(0);
-    assert.deepStrictEqual(sent, {
+    assert.deepStrictEqual(node.sent(0), {
         payload: {
             actuatedstate: null,
             name: 'test-node',
@@ -178,6 +177,48 @@ function testInfoCommand(infoCommand, dateFormatter) {
     assert.deepStrictEqual(node.sent(2), {
         payload: {
             actuatedstate: null,
+            name: 'test-node',
+            fri: true,
+            lat: 51.5050793,
+            lon: -0.1225863,
+            mon: true,
+            off: dateFormatter(offtime),
+            offoffset: '',
+            offpayload: 'offpayload1',
+            offrandomoffset: true,
+            offtime: config.offtime,
+            offtopic: 'offtopic',
+            on: dateFormatter(ontime),
+            onoffset: '',
+            onpayload: 'onpayload',
+            onrandomoffset: false,
+            ontime: ontime.format('HH:mm'),
+            ontopic: 'ontopic1',
+            sat: true,
+            state: 'on',
+            sun: true,
+            suspended: false,
+            thu: true,
+            tue: true,
+            wed: true
+        },
+        topic: 'info'
+    });
+
+    node.emit('input', {
+        payload: 'off'
+    });
+    assert.deepStrictEqual(node.sent(3), {
+        payload: 'offpayload1',
+        topic: 'offtopic'
+    });
+
+    node.emit('input', {
+        payload: infoCommand
+    });
+    assert.deepStrictEqual(node.sent(4), {
+        payload: {
+            actuatedstate: 'off',
             name: 'test-node',
             fri: true,
             lat: 51.5050793,
@@ -621,54 +662,54 @@ describe('schedex', function() {
         node.emit('input', { payload: 'send_state' });
         assert.strictEqual(0, node.sent().length);
     });
-    it('should send something when triggered', function(done) {
-        this.timeout(60000 * 5);
-        console.log(`\t[${this.test.title}] will take 3 minutes, please wait...`);
-        const ontime = moment()
-            .add(1, 'minute')
-            .format('HH:mm');
-        const offtime = moment()
-            .add(2, 'minute')
-            .format('HH:mm');
-        const node = newNode({
-            ontime,
-            offtime,
-            offoffset: 0,
-            offrandomoffset: '0'
-        });
-        setTimeout(function() {
-            assert.strictEqual(node.sent(0).payload, 'on payload');
-            assert.strictEqual(node.sent(0).topic, 'on topic');
-            assert.strictEqual(node.sent(1).payload, 'off payload');
-            assert.strictEqual(node.sent(1).topic, 'off topic');
-            done();
-        }, 60000 * 3);
-    });
-    it('should send something after programmatic configuration when triggered', function(done) {
-        this.timeout(60000 * 5);
-        console.log(`\t[${this.test.title}] will take 3 minutes, please wait...`);
-        const ontime = moment()
-            .add(1, 'minute')
-            .format('HH:mm');
-        const offtime = moment()
-            .add(2, 'minute')
-            .format('HH:mm');
-        const node = newNode({
-            offoffset: 0,
-            offrandomoffset: '0'
-        });
-        node.emit('input', {
-            payload: `ontime ${ontime}`
-        });
-        node.emit('input', {
-            payload: `offtime ${offtime}`
-        });
-        setTimeout(function() {
-            assert.strictEqual(node.sent(0).payload, 'on payload');
-            assert.strictEqual(node.sent(0).topic, 'on topic');
-            assert.strictEqual(node.sent(1).payload, 'off payload');
-            assert.strictEqual(node.sent(1).topic, 'off topic');
-            done();
-        }, 60000 * 3);
-    });
+    // it('should send something when triggered', function(done) {
+    //     this.timeout(60000 * 5);
+    //     console.log(`\t[${this.test.title}] will take 3 minutes, please wait...`);
+    //     const ontime = moment()
+    //         .add(1, 'minute')
+    //         .format('HH:mm');
+    //     const offtime = moment()
+    //         .add(2, 'minute')
+    //         .format('HH:mm');
+    //     const node = newNode({
+    //         ontime,
+    //         offtime,
+    //         offoffset: 0,
+    //         offrandomoffset: '0'
+    //     });
+    //     setTimeout(function() {
+    //         assert.strictEqual(node.sent(0).payload, 'on payload');
+    //         assert.strictEqual(node.sent(0).topic, 'on topic');
+    //         assert.strictEqual(node.sent(1).payload, 'off payload');
+    //         assert.strictEqual(node.sent(1).topic, 'off topic');
+    //         done();
+    //     }, 60000 * 3);
+    // });
+    // it('should send something after programmatic configuration when triggered', function(done) {
+    //     this.timeout(60000 * 5);
+    //     console.log(`\t[${this.test.title}] will take 3 minutes, please wait...`);
+    //     const ontime = moment()
+    //         .add(1, 'minute')
+    //         .format('HH:mm');
+    //     const offtime = moment()
+    //         .add(2, 'minute')
+    //         .format('HH:mm');
+    //     const node = newNode({
+    //         offoffset: 0,
+    //         offrandomoffset: '0'
+    //     });
+    //     node.emit('input', {
+    //         payload: `ontime ${ontime}`
+    //     });
+    //     node.emit('input', {
+    //         payload: `offtime ${offtime}`
+    //     });
+    //     setTimeout(function() {
+    //         assert.strictEqual(node.sent(0).payload, 'on payload');
+    //         assert.strictEqual(node.sent(0).topic, 'on topic');
+    //         assert.strictEqual(node.sent(1).payload, 'off payload');
+    //         assert.strictEqual(node.sent(1).topic, 'off topic');
+    //         done();
+    //     }, 60000 * 3);
+    // });
 });
