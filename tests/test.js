@@ -791,7 +791,7 @@ describe('schedex', function() {
             offrandomoffset: '0'
         });
         node.emit('input', {
-            payload: `ontime ${ontime.format('HH:mm')}`
+            payload: { ontime: `${ontime.format('HH:mm')}` }
         });
         node.emit('input', {
             payload: `offtime ${offtime.format('HH:mm')}`
