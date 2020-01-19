@@ -247,6 +247,7 @@ module.exports = function(RED) {
             event.callback = function() {
                 send(event);
                 schedule(event, true);
+                setStatus(Status.FIRED, { event, manual: false });
             };
             return event;
         }
