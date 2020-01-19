@@ -95,6 +95,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
     const sent = node.sent(0);
     assert.deepStrictEqual(sent, {
         payload: {
+            actuatedstate: null,
             name: 'test-node',
             fri: true,
             lat: 51.5050793,
@@ -132,6 +133,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
     });
     assert.deepStrictEqual(node.sent(1), {
         payload: {
+            actuatedstate: null,
             name: 'test-node',
             fri: true,
             lat: 51.5050793,
@@ -175,6 +177,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
     });
     assert.deepStrictEqual(node.sent(2), {
         payload: {
+            actuatedstate: null,
             name: 'test-node',
             fri: true,
             lat: 51.5050793,

@@ -305,6 +305,11 @@ module.exports = function(RED) {
                 } else if (msg.payload === 'info' || msg.payload === 'info_local') {
                     handled = true;
                     const payload = _.pick(config, Object.keys(configuration));
+                    payload.actuatedstate = null;
+                    if (lastEvent) {
+                        payload.actuatedstate =
+                            lastEvent.topic === events.on.ontopic ? 'on' : 'off';
+                    }
                     payload.name = config.name;
                     if (isSuspended()) {
                         payload.state = 'suspended';
