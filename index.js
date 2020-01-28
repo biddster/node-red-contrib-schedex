@@ -245,8 +245,11 @@ module.exports = function(RED) {
             event.name = eventName.toUpperCase();
             event.shape = shape;
             event.callback = function() {
-                send(event);
+                // #66 Order here is important as we need to schedule the next event
+                // before calling send as send calls setStatus. setStatus needs the
+                // latest event details so the node label is correct.
                 schedule(event, true);
+                send(event, false);
             };
             return event;
         }
@@ -316,15 +319,29 @@ module.exports = function(RED) {
                         payload.on = 'suspended';
                         payload.off = 'suspended';
                     } else {
-                        payload.state = events.off.moment.isAfter(events.on.moment)
-                            ? 'off'
-                            : 'on';
+                        if (events.on.moment && events.off.moment) {
+                            payload.state = events.off.moment.isAfter(events.on.moment)
+                                ? 'off'
+                                : 'on';
+                        } else if (events.on.moment) {
+                            payload.state = 'on';
+                        } else {
+                            payload.state = 'off';
+                        }
                         if (msg.payload === 'info') {
-                            payload.on = events.on.moment.toDate().toUTCString();
-                            payload.off = events.off.moment.toDate().toUTCString();
+                            payload.on = events.on.moment
+                                ? events.on.moment.toDate().toUTCString()
+                                : '';
+                            payload.off = events.off.moment
+                                ? events.off.moment.toDate().toUTCString()
+                                : '';
                         } else if (msg.payload === 'info_local') {
-                            payload.on = events.on.moment.toISOString(true);
-                            payload.off = events.off.moment.toISOString(true);
+                            payload.on = events.on.moment
+                                ? events.on.moment.toISOString(true)
+                                : '';
+                            payload.off = events.off.moment
+                                ? events.off.moment.toISOString(true)
+                                : '';
                         }
                     }
                     node.send({ topic: 'info', payload });

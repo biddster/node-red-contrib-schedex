@@ -249,6 +249,132 @@ function testInfoCommand(infoCommand, dateFormatter) {
 }
 
 describe('schedex', function() {
+    it('issue#66 should schedule correctly with a singular on or off', function(done) {
+        this.timeout(60000 * 5);
+        console.log(`\t[${this.test.title}] will take 1-ish minutes, please wait...`);
+        const ontime = moment()
+            .seconds(0)
+            .add(1, 'minute');
+        const node = newNode({
+            ontime: ontime.format('HH:mm'),
+            offtime: '',
+            offoffset: 0,
+            offrandomoffset: '0'
+        });
+        setTimeout(function() {
+            assert.strictEqual(node.sent(0).payload, 'on payload');
+            assert.strictEqual(node.sent(0).topic, 'on topic');
+            const events = node.schedexEvents();
+            console.log(`ontime: ${events.on.moment.toString()}`);
+            const future = ontime.clone().add(1, 'day');
+            assert.strictEqual(future.toString(), events.on.moment.toString());
+            assert.strictEqual(
+                node.status().text,
+                `ON auto until ON at ${future.format('YYYY-MM-DD HH:mm')}`
+            );
+            done();
+        }, 62000);
+    });
+    it('issue#66 info command should work with single on or off command', function() {
+        const now = moment('2019-12-13 11:00:00.000');
+        let node = newNode({
+            ontime: '10:00',
+            offtime: ''
+        });
+        node.now = function() {
+            return now.clone();
+        };
+        // Trigger some events so the node recalculates the on time
+        node.emit('input', { payload: { suspended: true } });
+        node.emit('input', { payload: { suspended: false } });
+        node.emit('input', { payload: 'info' });
+
+        assert.strictEqual(
+            '2019-12-14T10:00:00.000Z',
+            node.schedexEvents().on.moment.toISOString()
+        );
+        assert.strictEqual(node.schedexEvents().off.moment, null);
+
+        assert.deepStrictEqual(node.sent(0), {
+            payload: {
+                name: 'test-node',
+                fri: true,
+                lat: 51.5050793,
+                lon: -0.1225863,
+                mon: true,
+                off: '',
+                offoffset: '5',
+                offpayload: 'off payload',
+                offrandomoffset: true,
+                offtime: '',
+                offtopic: 'off topic',
+                on: 'Sat, 14 Dec 2019 10:00:00 GMT',
+                onoffset: '',
+                onpayload: 'on payload',
+                onrandomoffset: false,
+                ontime: '10:00',
+                ontopic: 'on topic',
+                sat: true,
+                state: 'on',
+                sun: true,
+                suspended: false,
+                thu: true,
+                tue: true,
+                wed: true
+            },
+            topic: 'info'
+        });
+
+        node = newNode({
+            ontime: '',
+            offtime: '10:00',
+            offoffset: '',
+            offrandomoffset: false
+        });
+        node.now = function() {
+            return now.clone();
+        };
+        // Trigger some events so the node recalculates the on time
+        node.emit('input', { payload: { suspended: true } });
+        node.emit('input', { payload: { suspended: false } });
+        node.emit('input', { payload: 'info' });
+
+        assert.strictEqual(
+            '2019-12-14T10:00:00.000Z',
+            node.schedexEvents().off.moment.toISOString()
+        );
+        assert.strictEqual(node.schedexEvents().on.moment, null);
+
+        assert.deepStrictEqual(node.sent(0), {
+            payload: {
+                name: 'test-node',
+                fri: true,
+                lat: 51.5050793,
+                lon: -0.1225863,
+                mon: true,
+                off: 'Sat, 14 Dec 2019 10:00:00 GMT',
+                offoffset: '',
+                offpayload: 'off payload',
+                offrandomoffset: false,
+                offtime: '10:00',
+                offtopic: 'off topic',
+                on: '',
+                onoffset: '',
+                onpayload: 'on payload',
+                onrandomoffset: false,
+                ontime: '',
+                ontopic: 'on topic',
+                sat: true,
+                state: 'off',
+                sun: true,
+                suspended: false,
+                thu: true,
+                tue: true,
+                wed: true
+            },
+            topic: 'info'
+        });
+    });
     it('issue#64 ability to schedule once a week', function() {
         const now = moment('2019-12-13 11:00:00.000');
         const node = newNode({
@@ -667,49 +793,73 @@ describe('schedex', function() {
         console.log(`\t[${this.test.title}] will take 3 minutes, please wait...`);
         const ontime = moment()
             .add(1, 'minute')
-            .format('HH:mm');
+            .seconds(0);
         const offtime = moment()
             .add(2, 'minute')
-            .format('HH:mm');
+            .seconds(0);
         const node = newNode({
-            ontime,
-            offtime,
+            ontime: ontime.format('HH:mm'),
+            offtime: offtime.format('HH:mm'),
             offoffset: 0,
             offrandomoffset: '0'
         });
         setTimeout(function() {
+            assert.strictEqual(node.sent().length, 1);
             assert.strictEqual(node.sent(0).payload, 'on payload');
             assert.strictEqual(node.sent(0).topic, 'on topic');
-            assert.strictEqual(node.sent(1).payload, 'off payload');
-            assert.strictEqual(node.sent(1).topic, 'off topic');
-            done();
-        }, 60000 * 3);
+            assert.strictEqual(
+                node.status().text,
+                `ON auto until OFF at ${offtime.format('YYYY-MM-DD HH:mm')}`
+            );
+
+            setTimeout(function() {
+                assert.strictEqual(node.sent().length, 2);
+                assert.strictEqual(node.sent(1).payload, 'off payload');
+                assert.strictEqual(node.sent(1).topic, 'off topic');
+                const nextOn = ontime.clone().add(1, 'day');
+                assert.strictEqual(
+                    node.status().text,
+                    `OFF auto until ON at ${nextOn.format('YYYY-MM-DD HH:mm')}`
+                );
+                done();
+            }, 62000);
+        }, 62000);
     });
     it('should send something after programmatic configuration when triggered', function(done) {
         this.timeout(60000 * 5);
         console.log(`\t[${this.test.title}] will take 3 minutes, please wait...`);
-        const ontime = moment()
-            .add(1, 'minute')
-            .format('HH:mm');
-        const offtime = moment()
-            .add(2, 'minute')
-            .format('HH:mm');
+        const ontime = moment().add(1, 'minute');
+        const offtime = moment().add(2, 'minute');
         const node = newNode({
             offoffset: 0,
             offrandomoffset: '0'
         });
         node.emit('input', {
-            payload: `ontime ${ontime}`
+            payload: { ontime: `${ontime.format('HH:mm')}` }
         });
         node.emit('input', {
-            payload: `offtime ${offtime}`
+            payload: `offtime ${offtime.format('HH:mm')}`
         });
         setTimeout(function() {
+            assert.strictEqual(node.sent().length, 1);
             assert.strictEqual(node.sent(0).payload, 'on payload');
             assert.strictEqual(node.sent(0).topic, 'on topic');
-            assert.strictEqual(node.sent(1).payload, 'off payload');
-            assert.strictEqual(node.sent(1).topic, 'off topic');
-            done();
-        }, 60000 * 3);
+            assert.strictEqual(
+                node.status().text,
+                `ON auto until OFF at ${offtime.format('YYYY-MM-DD HH:mm')}`
+            );
+
+            setTimeout(function() {
+                assert.strictEqual(node.sent().length, 2);
+                assert.strictEqual(node.sent(1).payload, 'off payload');
+                assert.strictEqual(node.sent(1).topic, 'off topic');
+                const nextOn = ontime.clone().add(1, 'day');
+                assert.strictEqual(
+                    node.status().text,
+                    `OFF auto until ON at ${nextOn.format('YYYY-MM-DD HH:mm')}`
+                );
+                done();
+            }, 62000);
+        }, 62000);
     });
 });
