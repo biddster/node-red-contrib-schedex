@@ -182,8 +182,9 @@ module.exports = function(RED) {
             }
 
             let valid = false;
-            let attempt = 1;
-            while (!valid && attempt <= 7) {
+            let day = 0;
+            // Today is day 0 and we try seven days into the future
+            while (!valid && day <= 7) {
                 const matches = new RegExp('(\\d+):(\\d+)', 'u').exec(event.time);
                 if (matches && matches.length) {
                     event.moment = event.moment.hour(+matches[1]).minute(+matches[2]);
@@ -214,7 +215,7 @@ module.exports = function(RED) {
                     weekdayConfig[event.moment.isoWeekday() - 1] && event.moment.isAfter(now);
                 if (!valid) {
                     event.moment.add(1, 'day');
-                    attempt++;
+                    day++;
                 }
             }
             if (!valid) {
@@ -245,8 +246,11 @@ module.exports = function(RED) {
             event.name = eventName.toUpperCase();
             event.shape = shape;
             event.callback = function() {
-                send(event);
+                // #66 Order here is important as we need to schedule the next event
+                // before calling send as send calls setStatus. setStatus needs the
+                // latest event details so the node label is correct.
                 schedule(event, true);
+                send(event, false);
             };
             return event;
         }
@@ -293,6 +297,15 @@ module.exports = function(RED) {
                 } else if (msg.payload === 'toggle') {
                     handled = true;
                     send(inverse(lastEvent), true);
+                } else if (msg.payload === 'send_state') {
+                    handled = true;
+                    if (!isSuspended()) {
+                        const isOff = events.off.moment.isAfter(events.on.moment);
+                        node.send({
+                            topic: isOff ? events.off.topic : events.on.topic,
+                            payload: isOff ? events.off.payload : events.on.payload
+                        });
+                    }
                 } else if (msg.payload === 'info' || msg.payload === 'info_local') {
                     handled = true;
                     const payload = _.pick(config, Object.keys(configuration));
@@ -302,15 +315,29 @@ module.exports = function(RED) {
                         payload.on = 'suspended';
                         payload.off = 'suspended';
                     } else {
-                        payload.state = events.off.moment.isAfter(events.on.moment)
-                            ? 'off'
-                            : 'on';
+                        if (events.on.moment && events.off.moment) {
+                            payload.state = events.off.moment.isAfter(events.on.moment)
+                                ? 'off'
+                                : 'on';
+                        } else if (events.on.moment) {
+                            payload.state = 'on';
+                        } else {
+                            payload.state = 'off';
+                        }
                         if (msg.payload === 'info') {
-                            payload.on = events.on.moment.toDate().toUTCString();
-                            payload.off = events.off.moment.toDate().toUTCString();
+                            payload.on = events.on.moment
+                                ? events.on.moment.toDate().toUTCString()
+                                : '';
+                            payload.off = events.off.moment
+                                ? events.off.moment.toDate().toUTCString()
+                                : '';
                         } else if (msg.payload === 'info_local') {
-                            payload.on = events.on.moment.toISOString(true);
-                            payload.off = events.off.moment.toISOString(true);
+                            payload.on = events.on.moment
+                                ? events.on.moment.toISOString(true)
+                                : '';
+                            payload.off = events.off.moment
+                                ? events.off.moment.toISOString(true)
+                                : '';
                         }
                     }
                     node.send({ topic: 'info', payload });
