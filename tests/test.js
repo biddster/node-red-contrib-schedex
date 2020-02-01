@@ -53,7 +53,7 @@ function newNode(configOverrides) {
         fri: true,
         sat: true,
         sun: true,
-        passthrough: false
+        passthroughunhandled: false
     };
     if (configOverrides) {
         _.assign(config, configOverrides);
@@ -87,7 +87,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
         fri: true,
         sat: true,
         sun: true,
-        passthrough: false
+        passthroughunhandled: false
     };
     const node = newNode(config);
 
@@ -114,7 +114,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
             onrandomoffset: false,
             ontime: config.ontime,
             ontopic: 'ontopic',
-            passthrough: false,
+            passthroughunhandled: false,
             sat: true,
             state: 'off',
             sun: true,
@@ -152,7 +152,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
             onrandomoffset: false,
             ontime: config.ontime,
             ontopic: 'ontopic',
-            passthrough: false,
+            passthroughunhandled: false,
             sat: true,
             state: 'suspended',
             sun: true,
@@ -196,7 +196,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
             onrandomoffset: false,
             ontime: ontime.format('HH:mm'),
             ontopic: 'ontopic1',
-            passthrough: false,
+            passthroughunhandled: false,
             sat: true,
             state: 'on',
             sun: true,
@@ -275,6 +275,7 @@ describe('schedex', function() {
                 onrandomoffset: false,
                 ontime: '10:00',
                 ontopic: 'on topic',
+                passthroughunhandled: false,
                 sat: true,
                 state: 'on',
                 sun: true,
@@ -325,6 +326,7 @@ describe('schedex', function() {
                 onrandomoffset: false,
                 ontime: '',
                 ontopic: 'on topic',
+                passthroughunhandled: false,
                 sat: true,
                 state: 'off',
                 sun: true,
@@ -368,13 +370,13 @@ describe('schedex', function() {
         );
     });
     it('issue#37 should pass through the message object', function() {
-        // Start with passthrough disabled, we should get nothing sent
-        const node = newNode({ passthrough: false });
+        // Start with passthroughunhandled disabled, we should get nothing sent
+        const node = newNode({ passthroughunhandled: false });
         node.emit('input', { payload: 'wibble' });
         assert.strictEqual(node.sent().length, 0);
 
-        // Now enable passthrough and we should get our input message emitted
-        node.emit('input', { payload: { passthrough: true } });
+        // Now enable passthroughunhandled and we should get our input message emitted
+        node.emit('input', { payload: { passthroughunhandled: true } });
         node.emit('input', { payload: 'wibble' });
         assert.strictEqual(node.sent(0).payload, 'wibble');
 
