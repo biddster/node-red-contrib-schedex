@@ -298,6 +298,7 @@ describe('schedex', function() {
         assert.deepStrictEqual(node.sent(0), {
             payload: {
                 name: 'test-node',
+                actuatedstate: null,
                 fri: true,
                 lat: 51.5050793,
                 lon: -0.1225863,
@@ -348,6 +349,7 @@ describe('schedex', function() {
         assert.deepStrictEqual(node.sent(0), {
             payload: {
                 name: 'test-node',
+                actuatedstate: null,
                 fri: true,
                 lat: 51.5050793,
                 lon: -0.1225863,
