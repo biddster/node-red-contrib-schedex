@@ -52,7 +52,8 @@ function newNode(configOverrides) {
         thu: true,
         fri: true,
         sat: true,
-        sun: true
+        sun: true,
+        passthroughunhandled: false
     };
     if (configOverrides) {
         _.assign(config, configOverrides);
@@ -85,7 +86,8 @@ function testInfoCommand(infoCommand, dateFormatter) {
         thu: true,
         fri: true,
         sat: true,
-        sun: true
+        sun: true,
+        passthroughunhandled: false
     };
     const node = newNode(config);
 
@@ -112,6 +114,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
             onrandomoffset: false,
             ontime: config.ontime,
             ontopic: 'ontopic',
+            passthroughunhandled: false,
             sat: true,
             state: 'off',
             sun: true,
@@ -150,6 +153,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
             onrandomoffset: false,
             ontime: config.ontime,
             ontopic: 'ontopic',
+            passthroughunhandled: false,
             sat: true,
             state: 'suspended',
             sun: true,
@@ -236,6 +240,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
             onrandomoffset: false,
             ontime: ontime.format('HH:mm'),
             ontopic: 'ontopic1',
+            passthroughunhandled: false,
             sat: true,
             state: 'on',
             sun: true,
@@ -315,6 +320,7 @@ describe('schedex', function() {
                 onrandomoffset: false,
                 ontime: '10:00',
                 ontopic: 'on topic',
+                passthroughunhandled: false,
                 sat: true,
                 state: 'on',
                 sun: true,
@@ -366,6 +372,7 @@ describe('schedex', function() {
                 onrandomoffset: false,
                 ontime: '',
                 ontopic: 'on topic',
+                passthroughunhandled: false,
                 sat: true,
                 state: 'off',
                 sun: true,
@@ -407,6 +414,21 @@ describe('schedex', function() {
             node.schedexEvents().off.moment.toISOString(),
             '2019-12-13T13:00:00.000Z'
         );
+    });
+    it('issue#37 should pass through the message object', function() {
+        // Start with passthroughunhandled disabled, we should get nothing sent
+        const node = newNode({ passthroughunhandled: false });
+        node.emit('input', { payload: 'wibble' });
+        assert.strictEqual(node.sent().length, 0);
+
+        // Now enable passthroughunhandled and we should get our input message emitted
+        node.emit('input', { payload: { passthroughunhandled: true } });
+        node.emit('input', { payload: 'wibble' });
+        assert.strictEqual(node.sent(0).payload, 'wibble');
+
+        node.emit('input', { payload: 'on' });
+        assert.strictEqual(node.sent(1).topic, 'on topic');
+        assert.strictEqual(node.sent(1).payload, 'on payload');
     });
     it('issue#56 suncalc falling over DST changes', function() {
         const now = moment('2019-10-26 22:00:00.000');

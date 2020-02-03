@@ -71,6 +71,14 @@ Both on and off times can be randomised by ticking "Use random time within offse
 dusk with an offset of -60 minutes, every day a message will be generated at a random time in a 60 minute window before
 dusk.
 
+## Message passthrough
+
+When `Passthrough unhandled messages` is enabled, any message that isn't explicitly handled by Schedex will be immediately emitted.
+To clarify, if the input payload does not match any one of the programmatic options above, along with
+the on|off|toggle|info|info_local commands, the message will be sent to output.
+
+With `Passthough unhandled messages`disabled (the default), any message that isn't handled by Schedex will be dropped and an error reported.
+
 ## Inputs
 
 You can wire inject nodes to the input of this node and send the following in `msg.payload`.
@@ -96,42 +104,44 @@ See here for further discussion https://github.com/node-red/node-red/issues/399.
 
 You can set the following:
 
-| Property                      | Type                                                                  |
-| ----------------------------- | --------------------------------------------------------------------- |
-| `msg.payload.suspended`       | Boolean: true will suspend scheduling, false will resume scheduling   |
-| `msg.payload.ontime`          | String value as specified in the table above for time configuration   |
-| `msg.payload.ontopic`         | String value emitted as the topic for the on event                    |
-| `msg.payload.onpayload`       | String value emitted as the payload for the on event                  |
-| `msg.payload.onoffset`        | Number value as specified above for Offset configuration              |
-| `msg.payload.onrandomoffset`  | Boolean value as specified above in Randomisation of Times            |
-| `msg.payload.offtime`         | String value as specified in the table above for time configuration   |
-| `msg.payload.offtopic`        | String value emitted as the topic for the off event                   |
-| `msg.payload.offpayload`      | String value emitted as the payload for the off event                 |
-| `msg.payload.offoffset`       | Number value as specified above for Offset configuration              |
-| `msg.payload.offrandomoffset` | Boolean value as specified above in Randomisation of Times            |
-| `msg.payload.mon`             | Boolean: true enables the schedule on a Monday, false disables it.    |
-| `msg.payload.tue`             | Boolean: true enables the schedule on a Tuesday, false disables it.   |
-| `msg.payload.wed`             | Boolean: true enables the schedule on a Wednesday, false disables it. |
-| `msg.payload.thu`             | Boolean: true enables the schedule on a Thursday, false disables it.  |
-| `msg.payload.fri`             | Boolean: true enables the schedule on a Friday, false disables it.    |
-| `msg.payload.sat`             | Boolean: true enables the schedule on a Saturday, false disables it.  |
-| `msg.payload.sun`             | Boolean: true enables the schedule on a Sunday, false disables it.    |
+| Property                           | Type                                                                               |
+| ---------------------------------- | ---------------------------------------------------------------------------------- |
+| `msg.payload.suspended`            | Boolean: true will suspend scheduling, false will resume scheduling                |
+| `msg.payload.ontime`               | String value as specified in the table above for time configuration                |
+| `msg.payload.ontopic`              | String value emitted as the topic for the on event                                 |
+| `msg.payload.onpayload`            | String value emitted as the payload for the on event                               |
+| `msg.payload.onoffset`             | Number value as specified above for Offset configuration                           |
+| `msg.payload.onrandomoffset`       | Boolean value as specified above in Randomisation of Times                         |
+| `msg.payload.offtime`              | String value as specified in the table above for time configuration                |
+| `msg.payload.offtopic`             | String value emitted as the topic for the off event                                |
+| `msg.payload.offpayload`           | String value emitted as the payload for the off event                              |
+| `msg.payload.offoffset`            | Number value as specified above for Offset configuration                           |
+| `msg.payload.offrandomoffset`      | Boolean value as specified above in Randomisation of Times                         |
+| `msg.payload.mon`                  | Boolean: true enables the schedule on a Monday, false disables it.                 |
+| `msg.payload.tue`                  | Boolean: true enables the schedule on a Tuesday, false disables it.                |
+| `msg.payload.wed`                  | Boolean: true enables the schedule on a Wednesday, false disables it.              |
+| `msg.payload.thu`                  | Boolean: true enables the schedule on a Thursday, false disables it.               |
+| `msg.payload.fri`                  | Boolean: true enables the schedule on a Friday, false disables it.                 |
+| `msg.payload.sat`                  | Boolean: true enables the schedule on a Saturday, false disables it.               |
+| `msg.payload.sun`                  | Boolean: true enables the schedule on a Sunday, false disables it.                 |
+| `msg.payload.passthroughunhandled` | Boolean: true enables unhandled input messages to automatically be sent to output. |
 
 Alternatively, you can send msg.payload as a string with the following values:
 
-| Example msg.payload                            | Description                                                 |
-| ---------------------------------------------- | ----------------------------------------------------------- |
-| `suspended true`                               | true will suspend scheduling, false will resume scheduling  |
-| `ontime 12:00`                                 | Time as specified in the table above for time configuration |
-| `ontopic my_topic`                             | Sets the topic for the on event (no spaces)                 |
-| `onpayload my_payload`                         | Sets the payload for the on event (no spaces)               |
-| `onoffset 30`                                  | Sets the offset for the on event                            |
-| `onrandomoffset true`                          | Sets the random offset for the on event                     |
-| `offtime dusk`                                 | Time as specified in the table above for time configuration |
-| `offtopic my_topic`                            | Sets the topic for the off event (no spaces)                |
-| `offpayload my_payload`                        | Sets the payload for the off event (no spaces)              |
-| `offoffset -30`                                | Sets the offset for the off event                           |
-| `offrandomoffset false`                        | Sets the random offset for the off event                    |
-| `mon false`                                    | Disables the schedule on a Monday                           |
-| `tue true`                                     | Enables the schedule on a Tuesday                           |
-| `ontime 16:30 onoffset 60 onrandomoffset true` | Sets the time, offset and random offset for the on event    |
+| Example msg.payload                            | Description                                                          |
+| ---------------------------------------------- | -------------------------------------------------------------------- |
+| `suspended true`                               | true will suspend scheduling, false will resume scheduling           |
+| `ontime 12:00`                                 | Time as specified in the table above for time configuration          |
+| `ontopic my_topic`                             | Sets the topic for the on event (no spaces)                          |
+| `onpayload my_payload`                         | Sets the payload for the on event (no spaces)                        |
+| `onoffset 30`                                  | Sets the offset for the on event                                     |
+| `onrandomoffset true`                          | Sets the random offset for the on event                              |
+| `offtime dusk`                                 | Time as specified in the table above for time configuration          |
+| `offtopic my_topic`                            | Sets the topic for the off event (no spaces)                         |
+| `offpayload my_payload`                        | Sets the payload for the off event (no spaces)                       |
+| `offoffset -30`                                | Sets the offset for the off event                                    |
+| `offrandomoffset false`                        | Sets the random offset for the off event                             |
+| `mon false`                                    | Disables the schedule on a Monday                                    |
+| `tue true`                                     | Enables the schedule on a Tuesday                                    |
+| `ontime 16:30 onoffset 60 onrandomoffset true` | Sets the time, offset and random offset for the on event             |
+| `passthroughunhandled false`                   | Disabled unhandled input messages automatically being sent to output |

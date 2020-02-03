@@ -61,7 +61,8 @@ module.exports = function(RED) {
         sun: toBoolean,
         lon: Number,
         lat: Number,
-        suspended: toBoolean
+        suspended: toBoolean,
+        passthroughunhandled: toBoolean
     });
 
     RED.nodes.registerType('schedex', function(config) {
@@ -367,7 +368,11 @@ module.exports = function(RED) {
                 });
             }
             if (!handled) {
-                setStatus(Status.ERROR, { error: 'Unsupported input' });
+                if (config.passthroughunhandled) {
+                    node.send(msg);
+                } else {
+                    setStatus(Status.ERROR, { error: 'Unsupported input' });
+                }
             } else if (requiresBootstrap) {
                 bootstrap();
             }
