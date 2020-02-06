@@ -174,23 +174,35 @@ module.exports = function(RED) {
 
             const now = node.now();
             const weekdayConfig = getWeekdayConfig();
-
-            event.moment = node.now();
+            let day = 0;
             if (firedNow) {
                 // We've already fired today so start by examining tomorrow
                 event.moment.add(1, 'day');
+                day = 1;
+            } else {
+                event.moment = node.now();
             }
 
             let valid = false;
-            let day = 0;
+
             // Today is day 0 and we try seven days into the future
             while (!valid && day <= 7) {
                 const matches = new RegExp('(\\d+):(\\d+)', 'u').exec(event.time);
                 if (matches && matches.length) {
-                    event.moment = event.moment.hour(+matches[1]).minute(+matches[2]);
+                    event.moment = event.moment
+                        .hour(+matches[1])
+                        .minute(+matches[2])
+                        .second(0);
                 } else {
+                    // #57 The suncalc calculations work upon days so we
+                    // supply the day we're checking as midnight that day.
                     const sunCalcTimes = SunCalc.getTimes(
-                        event.moment.toDate(),
+                        event.moment
+                            .clone()
+                            .hour(0)
+                            .minute(0)
+                            .second(0)
+                            .toDate(),
                         config.lat,
                         config.lon
                     );
@@ -199,7 +211,14 @@ module.exports = function(RED) {
                         setStatus(Status.ERROR, { error: `Invalid time [${event.time}]` });
                         return false;
                     }
-                    event.moment = moment(date);
+                    // #57 Nadir appears to work differently to other sun times
+                    // in that it will calculate tomorrow's nadir if the time is
+                    // too close to today's nadir. So we bludgeon the date back
+                    // to the day we're checking.
+                    event.moment = moment(date)
+                        .year(event.moment.year())
+                        .month(event.moment.month())
+                        .day(event.moment.day());
                 }
 
                 event.moment.seconds(0).millisecond(0);
