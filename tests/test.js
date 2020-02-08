@@ -198,6 +198,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
             onrandomoffset: false,
             ontime: ontime.format('HH:mm'),
             ontopic: 'ontopic1',
+            passthroughunhandled: false,
             sat: true,
             state: 'on',
             sun: true,
