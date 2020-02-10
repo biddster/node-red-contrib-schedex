@@ -95,9 +95,9 @@ function testInfoCommand(infoCommand, dateFormatter) {
     node.emit('input', {
         payload: infoCommand
     });
-    const sent = node.sent(0);
-    assert.deepStrictEqual(sent, {
+    assert.deepStrictEqual(node.sent(0), {
         payload: {
+            actuatedstate: null,
             name: 'test-node',
             fri: true,
             lat: 51.5050793,
@@ -136,6 +136,7 @@ function testInfoCommand(infoCommand, dateFormatter) {
     });
     assert.deepStrictEqual(node.sent(1), {
         payload: {
+            actuatedstate: null,
             name: 'test-node',
             fri: true,
             lat: 51.5050793,
@@ -180,6 +181,50 @@ function testInfoCommand(infoCommand, dateFormatter) {
     });
     assert.deepStrictEqual(node.sent(2), {
         payload: {
+            actuatedstate: null,
+            name: 'test-node',
+            fri: true,
+            lat: 51.5050793,
+            lon: -0.1225863,
+            mon: true,
+            off: dateFormatter(offtime),
+            offoffset: '',
+            offpayload: 'offpayload1',
+            offrandomoffset: true,
+            offtime: config.offtime,
+            offtopic: 'offtopic',
+            on: dateFormatter(ontime),
+            onoffset: '',
+            onpayload: 'onpayload',
+            onrandomoffset: false,
+            ontime: ontime.format('HH:mm'),
+            ontopic: 'ontopic1',
+            passthroughunhandled: false,
+            sat: true,
+            state: 'on',
+            sun: true,
+            suspended: false,
+            thu: true,
+            tue: true,
+            wed: true
+        },
+        topic: 'info'
+    });
+
+    node.emit('input', {
+        payload: 'off'
+    });
+    assert.deepStrictEqual(node.sent(3), {
+        payload: 'offpayload1',
+        topic: 'offtopic'
+    });
+
+    node.emit('input', {
+        payload: infoCommand
+    });
+    assert.deepStrictEqual(node.sent(4), {
+        payload: {
+            actuatedstate: 'off',
             name: 'test-node',
             fri: true,
             lat: 51.5050793,
@@ -289,6 +334,7 @@ describe('schedex', function() {
         assert.deepStrictEqual(node.sent(0), {
             payload: {
                 name: 'test-node',
+                actuatedstate: null,
                 fri: true,
                 lat: 51.5050793,
                 lon: -0.1225863,
@@ -340,6 +386,7 @@ describe('schedex', function() {
         assert.deepStrictEqual(node.sent(0), {
             payload: {
                 name: 'test-node',
+                actuatedstate: null,
                 fri: true,
                 lat: 51.5050793,
                 lon: -0.1225863,
