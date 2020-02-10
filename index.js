@@ -68,9 +68,18 @@ module.exports = function(RED) {
     RED.nodes.registerType('schedex', function(config) {
         RED.nodes.createNode(this, config);
         const node = this;
+        const globalConfig = { debug: false };
         const events = {};
         // Assume the node is off initially
         let lastEvent = events.off;
+
+        function getGlobalConfig() {
+            return _.assign(globalConfig, node.context().global.get('schedex'));
+        }
+
+        function debug(args) {
+            if (getGlobalConfig().debug) node.log(...args);
+        }
 
         // Make sure these two props are proper booleans.
         config.onrandomoffset = !!config.onrandomoffset;
@@ -175,18 +184,18 @@ module.exports = function(RED) {
             const now = node.now();
             const weekdayConfig = getWeekdayConfig();
             let day = 0;
+            event.moment = node.now();
             if (firedNow) {
                 // We've already fired today so start by examining tomorrow
                 event.moment.add(1, 'day');
                 day = 1;
-            } else {
-                event.moment = node.now();
             }
 
             let valid = false;
 
             // Today is day 0 and we try seven days into the future
             while (!valid && day <= 7) {
+                debug(`Examining day [${day}]`);
                 const matches = new RegExp('(\\d+):(\\d+)', 'u').exec(event.time);
                 if (matches && matches.length) {
                     event.moment = event.moment
@@ -194,20 +203,12 @@ module.exports = function(RED) {
                         .minute(+matches[2])
                         .second(0);
                 } else {
-                    // #57 The suncalc calculations work upon days so we
-                    // supply the day we're checking as midnight that day.
-                    // It makes a little difference to the times calculated
-                    // if we supply a time portion.
-                    const sunCalcTimes = SunCalc.getTimes(
-                        event.moment
-                            .clone()
-                            .hour(0)
-                            .minute(0)
-                            .second(0)
-                            .toDate(),
-                        config.lat,
-                        config.lon
-                    );
+                    const sunDate = event.moment
+                        .hour(12)
+                        .minute(0)
+                        .second(0)
+                        .toDate();
+                    const sunCalcTimes = SunCalc.getTimes(sunDate, config.lat, config.lon);
                     const date = sunCalcTimes[event.time];
                     if (!date) {
                         setStatus(Status.ERROR, { error: `Invalid time [${event.time}]` });
@@ -215,16 +216,15 @@ module.exports = function(RED) {
                     }
                     // #57 Nadir appears to work differently to other sun times
                     // in that it will calculate tomorrow's nadir if the time is
-                    // too close to today's nadir. So we bludgeon the date back
-                    // to the day we're checking. It's not perfect as nadir differs
-                    // by a couple of seconds each day, but it's close enough.
-                    event.moment = moment(date)
-                        .year(event.moment.year())
-                        .month(event.moment.month())
-                        .day(event.moment.day());
+                    // too close to today's nadir. So we just take the time and
+                    // apply that to the event's moment.
+                    event.moment
+                        .hour(date.getHours())
+                        .minute(date.getMinutes())
+                        .second(date.getSeconds());
                 }
 
-                event.moment.seconds(0).millisecond(0);
+                event.moment.millisecond(0);
                 if (event.offset) {
                     let adjustment = event.offset;
                     if (event.randomoffset) {
