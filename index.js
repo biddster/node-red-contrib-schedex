@@ -77,8 +77,8 @@ module.exports = function(RED) {
             return _.assign(globalConfig, node.context().global.get('schedex'));
         }
 
-        function debug(args) {
-            if (getGlobalConfig().debug) node.log(...args);
+        function debug(...args) {
+            if (getGlobalConfig().debug) node.log.apply(node.log, args);
         }
 
         // Make sure these two props are proper booleans.
@@ -190,12 +190,12 @@ module.exports = function(RED) {
                 event.moment.add(1, 'day');
                 day = 1;
             }
+            debug(`Event fired now [${firedNow}] using date [${event.moment.toString()}]`);
 
             let valid = false;
 
             // Today is day 0 and we try seven days into the future
             while (!valid && day <= 7) {
-                debug(`Examining day [${day}]`);
                 const matches = new RegExp('(\\d+):(\\d+)', 'u').exec(event.time);
                 if (matches && matches.length) {
                     event.moment = event.moment
@@ -235,6 +235,7 @@ module.exports = function(RED) {
 
                 valid =
                     weekdayConfig[event.moment.isoWeekday() - 1] && event.moment.isAfter(now);
+                debug(`Day [${day}] [${event.moment.toString()}] valid [${valid}]`);
                 if (!valid) {
                     event.moment.add(1, 'day');
                     day++;
