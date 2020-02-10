@@ -184,19 +184,19 @@ module.exports = function(RED) {
             const now = node.now();
             const weekdayConfig = getWeekdayConfig();
             let day = 0;
-            event.moment = node.now();
+            event.moment = node.now().millisecond(0);
             if (firedNow) {
                 // We've already fired today so start by examining tomorrow
                 event.moment.add(1, 'day');
                 day = 1;
             }
-            debug(`Event fired now [${firedNow}] using date [${event.moment.toString()}]`);
+            debug(`Event fired now [${firedNow}] npm  date [${event.moment.toString()}]`);
 
             let valid = false;
+            const matches = new RegExp('(\\d+):(\\d+)', 'u').exec(event.time);
 
             // Today is day 0 and we try seven days into the future
             while (!valid && day <= 7) {
-                const matches = new RegExp('(\\d+):(\\d+)', 'u').exec(event.time);
                 if (matches && matches.length) {
                     event.moment = event.moment
                         .hour(+matches[1])
@@ -224,13 +224,11 @@ module.exports = function(RED) {
                         .second(date.getSeconds());
                 }
 
-                event.moment.millisecond(0);
                 if (event.offset) {
-                    let adjustment = event.offset;
-                    if (event.randomoffset) {
-                        adjustment = event.offset * Math.random();
-                    }
-                    event.moment.add(adjustment, 'minutes');
+                    event.moment.add(
+                        event.randomoffset ? event.offset * Math.random() : event.offset,
+                        'minutes'
+                    );
                 }
 
                 valid =
