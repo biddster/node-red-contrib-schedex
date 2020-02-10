@@ -193,14 +193,14 @@ module.exports = function(RED) {
             debug(`Event fired now [${firedNow}] npm  date [${event.moment.toString()}]`);
 
             let valid = false;
-            const matches = new RegExp('(\\d+):(\\d+)', 'u').exec(event.time);
+            const clockTime = new RegExp('(\\d+):(\\d+)', 'u').exec(event.time);
 
             // Today is day 0 and we try seven days into the future
             while (!valid && day <= 7) {
-                if (matches && matches.length) {
+                if (clockTime && clockTime.length) {
                     event.moment = event.moment
-                        .hour(+matches[1])
-                        .minute(+matches[2])
+                        .hour(+clockTime[1])
+                        .minute(+clockTime[2])
                         .second(0);
                 } else {
                     const sunDate = event.moment
@@ -208,9 +208,9 @@ module.exports = function(RED) {
                         .minute(0)
                         .second(0)
                         .toDate();
-                    const sunCalcTimes = SunCalc.getTimes(sunDate, config.lat, config.lon);
-                    const date = sunCalcTimes[event.time];
-                    if (!date) {
+                    const sunTimes = SunCalc.getTimes(sunDate, config.lat, config.lon);
+                    const sunTime = sunTimes[event.time];
+                    if (!sunTime) {
                         setStatus(Status.ERROR, { error: `Invalid time [${event.time}]` });
                         return false;
                     }
@@ -219,9 +219,9 @@ module.exports = function(RED) {
                     // too close to today's nadir. So we just take the time and
                     // apply that to the event's moment.
                     event.moment
-                        .hour(date.getHours())
-                        .minute(date.getMinutes())
-                        .second(date.getSeconds());
+                        .hour(sunTime.getHours())
+                        .minute(sunTime.getMinutes())
+                        .second(sunTime.getSeconds());
                 }
 
                 if (event.offset) {
