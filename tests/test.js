@@ -30,6 +30,10 @@ const mock = require('node-red-contrib-mock-node');
 const SunCalc = require('suncalc2');
 const nodeRedModule = require('../index.js');
 
+const enableDebug = (nrModule, node1) => {
+    node1.context().global.set('schedex', { debug: true });
+};
+
 function newNode(configOverrides, preConfigureNodeCallback) {
     const config = {
         name: 'test-node',
@@ -448,7 +452,7 @@ describe('schedex', function() {
     });
     it('issue#37 should pass through the message object', function() {
         // Start with passthroughunhandled disabled, we should get nothing sent
-        const node = newNode({ passthroughunhandled: false });
+        const node = newNode({ passthroughunhandled: false }, enableDebug);
         node.emit('input', { payload: 'wibble' });
         assert.strictEqual(node.sent().length, 0);
 
@@ -477,15 +481,7 @@ describe('schedex', function() {
         );
         console.log(sunCalcTimes.sunset);
 
-        const node = newNode(
-            {
-                ontime: 'sunset',
-                offtime: '21:00'
-            },
-            (nrModule, node1) => {
-                node1.context().global.set('schedex', { debug: true });
-            }
-        );
+        const node = newNode({ ontime: 'sunset', offtime: '21:00' }, enableDebug);
 
         node.now = function() {
             return now.clone();

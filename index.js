@@ -155,12 +155,14 @@ module.exports = function(RED) {
             } else if (status === Status.ERROR) {
                 message.push(error);
             }
-
-            node.status({ fill, shape, text: message.join(' ') });
+            const text = message.join(' ');
+            debug(`status: fill [${fill}] shape [${shape}] text [${text}]`);
+            node.status({ fill, shape, text });
         }
 
         function send(event, manual) {
             lastEvent = event;
+            debug(`send: topic [${event.topic}] payload [${event.payload}]`);
             node.send({ topic: event.topic, payload: event.payload });
             setStatus(Status.FIRED, { event, manual });
         }
@@ -190,7 +192,7 @@ module.exports = function(RED) {
                 event.moment.add(1, 'day');
                 day = 1;
             }
-            debug(`Event fired now [${firedNow}] npm  date [${event.moment.toString()}]`);
+            debug(`schedule: event fired now [${firedNow}] date [${event.moment.toString()}]`);
 
             let valid = false;
             const clockTime = new RegExp('(\\d+):(\\d+)', 'u').exec(event.time);
@@ -203,6 +205,8 @@ module.exports = function(RED) {
                         .minute(+clockTime[2])
                         .second(0);
                 } else {
+                    // #57 Suncalc appears to give the best results if you
+                    // calculate at midday.
                     const sunDate = event.moment
                         .hour(12)
                         .minute(0)
@@ -217,7 +221,8 @@ module.exports = function(RED) {
                     // #57 Nadir appears to work differently to other sun times
                     // in that it will calculate tomorrow's nadir if the time is
                     // too close to today's nadir. So we just take the time and
-                    // apply that to the event's moment.
+                    // apply that to the event's moment. That's doesn't yield a
+                    // perfect suntime but it's close enough.
                     event.moment
                         .hour(sunTime.getHours())
                         .minute(sunTime.getMinutes())
@@ -233,7 +238,7 @@ module.exports = function(RED) {
 
                 valid =
                     weekdayConfig[event.moment.isoWeekday() - 1] && event.moment.isAfter(now);
-                debug(`Day [${day}] [${event.moment.toString()}] valid [${valid}]`);
+                debug(`schedule: day [${day}] [${event.moment.toString()}] valid [${valid}]`);
                 if (!valid) {
                     event.moment.add(1, 'day');
                     day++;
