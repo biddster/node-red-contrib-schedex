@@ -260,307 +260,309 @@ THE SOFTWARE.
 </script>
 
 <script type="text/x-red" data-help-name="schedex">
-            <!-- START -->
-<h1 id="schedex">Schedex</h1>
-<p>Scheduler for node-red which allows you to enter on/off times as 24hr clock (e.g. 01:10) or suncalc events (e.g.<br>goldenHour). It also allows you to offset times and randomise the time within the offset.</p>
-<p>Inspired by Pete Scargill&#39;s <a href="http://tech.scargill.net/big-timer/">BigTimer</a></p>
-<p><strong>NOTE: When upgrading from versions prior to 1.0.0, you will see a message for each Schedex node in the Node-RED debug<br>window. This message is to advise that the Schedex configuration changed slightly in version 1.0.0 in order to<br>accomodate days of the week when scheduling. To remedy, simply edit each Schedex node, tick the days of the week you<br>want Schedex enabled and re-deploy.</strong></p>
-<h1 id="installation">Installation</h1>
-<p>This node requires node 6.x+. It&#39;s tested against 6.14.2.</p>
-<pre><code>$ cd ~/.node-red
-$ npm install node-red-contrib-schedex
-</code></pre><h1 id="configuration">Configuration</h1>
-<h2 id="schedule">Schedule</h2>
-<p>The scheduling days allow you to choose which days of the week to schedule events. Unticking all days will suspend<br>scheduling.</p>
-<h2 id="suspending-scheduling">Suspending scheduling</h2>
-<p>The &#39;Suspend scheduling&#39; checkbox allows you to disable time scheduling. If scheduling is suspended, Schedex will only<br>generate output events upon receipt of input &#39;on&#39; and &#39;off&#39; events (see below).</p>
-<p>This setting is provided for the situation where you temporarily don&#39;t want time based activation and don&#39;t want to rewire your Node-RED flow.</p>
-<blockquote>
-<p>Note that scheduling is suspended if you do not enter an on or off time in the node configuration.</p>
-</blockquote>
-<h2 id="times">Times</h2>
-<blockquote>
-<p>Note that on and off times are independent. You only need to configure one or the other or both. You can leave the on or off time field blank in the node configuration and no output will be emitted.</p>
-</blockquote>
-<p>The times can be a 24 hour time or a <a href="https://github.com/mourner/suncalc">suncalc</a> event:</p>
-<table>
-<thead>
-<tr>
-<th>Time</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>00:00 ... 23:59</code></td>
-<td>24hr time</td>
-</tr>
-<tr>
-<td><code>sunrise</code></td>
-<td>sunrise (top edge of the sun appears on the horizon)</td>
-</tr>
-<tr>
-<td><code>sunriseEnd</code></td>
-<td>sunrise ends (bottom edge of the sun touches the horizon)</td>
-</tr>
-<tr>
-<td><code>goldenHourEnd</code></td>
-<td>morning golden hour (soft light, best time for photography) ends</td>
-</tr>
-<tr>
-<td><code>solarNoon</code></td>
-<td>solar noon (sun is in the highest position)</td>
-</tr>
-<tr>
-<td><code>goldenHour</code></td>
-<td>evening golden hour starts</td>
-</tr>
-<tr>
-<td><code>sunsetStart</code></td>
-<td>sunset starts (bottom edge of the sun touches the horizon)</td>
-</tr>
-<tr>
-<td><code>sunset</code></td>
-<td>sunset (sun disappears below the horizon, evening civil twilight starts)</td>
-</tr>
-<tr>
-<td><code>dusk</code></td>
-<td>dusk (evening nautical twilight starts)</td>
-</tr>
-<tr>
-<td><code>nauticalDusk</code></td>
-<td>nautical dusk (evening astronomical twilight starts)</td>
-</tr>
-<tr>
-<td><code>night</code></td>
-<td>night starts (dark enough for astronomical observations)</td>
-</tr>
-<tr>
-<td><code>nadir</code></td>
-<td>nadir (darkest moment of the night, sun is in the lowest position)</td>
-</tr>
-<tr>
-<td><code>nightEnd</code></td>
-<td>night ends (morning astronomical twilight starts)</td>
-</tr>
-<tr>
-<td><code>nauticalDawn</code></td>
-<td>nautical dawn (morning nautical twilight starts)</td>
-</tr>
-<tr>
-<td><code>dawn</code></td>
-<td>dawn (morning nautical twilight ends, morning civil twilight starts)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="offsets">Offsets</h2>
-<p>The on and off time can have an offset. This is specified in minutes:</p>
-<ul>
-<li>-ve number brings the time forward. E.g. if the time is dusk and offset is -60, a message will be generated 60 minutes<br>before dusk.</li>
-<li>+ve number delays the time by the specified number of minutes</li>
-</ul>
-<h2 id="randomisation-of-times">Randomisation of times</h2>
-<p>Both on and off times can be randomised by ticking &quot;Use random time within offset period&quot;. For example, if you specify<br>dusk with an offset of -60 minutes, every day a message will be generated at a random time in a 60 minute window before<br>dusk.</p>
-<h2 id="message-passthrough">Message passthrough</h2>
-<p>When <code>Passthrough unhandled messages</code> is enabled, any message that isn&#39;t explicitly handled by Schedex will be immediately emitted.<br>To clarify, if the input payload does not match any one of the programmatic options above, along with<br>the on|off|toggle|info|info_local commands, the message will be sent to output.</p>
-<p>With <code>Passthough unhandled messages</code>disabled (the default), any message that isn&#39;t handled by Schedex will be dropped and an error reported.</p>
-<h2 id="inputs">Inputs</h2>
-<p>You can wire inject nodes to the input of this node and send the following in <code>msg.payload</code>.</p>
-<table>
-<thead>
-<tr>
-<th>msg.payload</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>on</code></td>
-<td>Triggers manual on mode and causes Schedex to emit the configured on event. Manual mode is reset when the next on or off time is reached</td>
-</tr>
-<tr>
-<td><code>off</code></td>
-<td>Triggers manual off mode and causes Schedex to emit the configured off event. Manual mode is reset when the next on or off time is reached</td>
-</tr>
-<tr>
-<td><code>toggle</code></td>
-<td>Triggers either the manual on or manual off mode. If the last event was the on event, toggle will cause schedex to emit the off event and vice versa. State is not maintained over restarts and deploys. Schedex assumes off upon start so the first toggle will emit the on event.</td>
-</tr>
-<tr>
-<td><code>info</code></td>
-<td>Schedex emits an object containing the on and off times in UTC format. It also contains the state which is either on or off along with the rest of this node&#39;s configuration.</td>
-</tr>
-<tr>
-<td><code>info_local</code></td>
-<td>Schedex emits an object containing the on and off times in local ISO format. It also contains the state which is either on or off along with the rest of this node&#39;s configuration.</td>
-</tr>
-<tr>
-<td><code>send_state</code></td>
-<td>Causes Schedex to emit the current state as a message with either the on or off topic/payload set. If Schedex is suspended, this command emits nothing.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="programmatic-control">Programmatic Control</h2>
-<p>This node supports programmatic time control as well as configuration via the NodeRED UI.</p>
-<p><strong>It is very important to note that properties set programmatically in this manner are transient. They will not persist<br>over a NodeRED restart or redeploy!</strong></p>
-<p>Note that both the property-based and string-based specifications are overrides that violate the usual behavior.<br>See here for further discussion <a href="https://github.com/node-red/node-red/issues/399">https://github.com/node-red/node-red/issues/399</a>.</p>
-<p>You can set the following:</p>
-<table>
-<thead>
-<tr>
-<th>Property</th>
-<th>Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>msg.payload.suspended</code></td>
-<td>Boolean: true will suspend scheduling, false will resume scheduling</td>
-</tr>
-<tr>
-<td><code>msg.payload.ontime</code></td>
-<td>String value as specified in the table above for time configuration</td>
-</tr>
-<tr>
-<td><code>msg.payload.ontopic</code></td>
-<td>String value emitted as the topic for the on event</td>
-</tr>
-<tr>
-<td><code>msg.payload.onpayload</code></td>
-<td>String value emitted as the payload for the on event</td>
-</tr>
-<tr>
-<td><code>msg.payload.onoffset</code></td>
-<td>Number value as specified above for Offset configuration</td>
-</tr>
-<tr>
-<td><code>msg.payload.onrandomoffset</code></td>
-<td>Boolean value as specified above in Randomisation of Times</td>
-</tr>
-<tr>
-<td><code>msg.payload.offtime</code></td>
-<td>String value as specified in the table above for time configuration</td>
-</tr>
-<tr>
-<td><code>msg.payload.offtopic</code></td>
-<td>String value emitted as the topic for the off event</td>
-</tr>
-<tr>
-<td><code>msg.payload.offpayload</code></td>
-<td>String value emitted as the payload for the off event</td>
-</tr>
-<tr>
-<td><code>msg.payload.offoffset</code></td>
-<td>Number value as specified above for Offset configuration</td>
-</tr>
-<tr>
-<td><code>msg.payload.offrandomoffset</code></td>
-<td>Boolean value as specified above in Randomisation of Times</td>
-</tr>
-<tr>
-<td><code>msg.payload.mon</code></td>
-<td>Boolean: true enables the schedule on a Monday, false disables it.</td>
-</tr>
-<tr>
-<td><code>msg.payload.tue</code></td>
-<td>Boolean: true enables the schedule on a Tuesday, false disables it.</td>
-</tr>
-<tr>
-<td><code>msg.payload.wed</code></td>
-<td>Boolean: true enables the schedule on a Wednesday, false disables it.</td>
-</tr>
-<tr>
-<td><code>msg.payload.thu</code></td>
-<td>Boolean: true enables the schedule on a Thursday, false disables it.</td>
-</tr>
-<tr>
-<td><code>msg.payload.fri</code></td>
-<td>Boolean: true enables the schedule on a Friday, false disables it.</td>
-</tr>
-<tr>
-<td><code>msg.payload.sat</code></td>
-<td>Boolean: true enables the schedule on a Saturday, false disables it.</td>
-</tr>
-<tr>
-<td><code>msg.payload.sun</code></td>
-<td>Boolean: true enables the schedule on a Sunday, false disables it.</td>
-</tr>
-<tr>
-<td><code>msg.payload.passthroughunhandled</code></td>
-<td>Boolean: true enables unhandled input messages to automatically be sent to output.</td>
-</tr>
-</tbody>
-</table>
-<p>Alternatively, you can send msg.payload as a string with the following values:</p>
-<table>
-<thead>
-<tr>
-<th>Example msg.payload</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>suspended true</code></td>
-<td>true will suspend scheduling, false will resume scheduling</td>
-</tr>
-<tr>
-<td><code>ontime 12:00</code></td>
-<td>Time as specified in the table above for time configuration</td>
-</tr>
-<tr>
-<td><code>ontopic my_topic</code></td>
-<td>Sets the topic for the on event (no spaces)</td>
-</tr>
-<tr>
-<td><code>onpayload my_payload</code></td>
-<td>Sets the payload for the on event (no spaces)</td>
-</tr>
-<tr>
-<td><code>onoffset 30</code></td>
-<td>Sets the offset for the on event</td>
-</tr>
-<tr>
-<td><code>onrandomoffset true</code></td>
-<td>Sets the random offset for the on event</td>
-</tr>
-<tr>
-<td><code>offtime dusk</code></td>
-<td>Time as specified in the table above for time configuration</td>
-</tr>
-<tr>
-<td><code>offtopic my_topic</code></td>
-<td>Sets the topic for the off event (no spaces)</td>
-</tr>
-<tr>
-<td><code>offpayload my_payload</code></td>
-<td>Sets the payload for the off event (no spaces)</td>
-</tr>
-<tr>
-<td><code>offoffset -30</code></td>
-<td>Sets the offset for the off event</td>
-</tr>
-<tr>
-<td><code>offrandomoffset false</code></td>
-<td>Sets the random offset for the off event</td>
-</tr>
-<tr>
-<td><code>mon false</code></td>
-<td>Disables the schedule on a Monday</td>
-</tr>
-<tr>
-<td><code>tue true</code></td>
-<td>Enables the schedule on a Tuesday</td>
-</tr>
-<tr>
-<td><code>ontime 16:30 onoffset 60 onrandomoffset true</code></td>
-<td>Sets the time, offset and random offset for the on event</td>
-</tr>
-<tr>
-<td><code>passthroughunhandled false</code></td>
-<td>Disabled unhandled input messages automatically being sent to output</td>
-</tr>
-</tbody>
-</table>
-            <!-- END -->
+                <!-- START -->
+    <h1 id="schedex">Schedex</h1>
+    <p>Scheduler for node-red which allows you to enter on/off times as 24hr clock (e.g. 01:10) or suncalc events (e.g.<br>goldenHour). It also allows you to offset times and randomise the time within the offset.</p>
+    <p>Inspired by Pete Scargill&#39;s <a href="http://tech.scargill.net/big-timer/">BigTimer</a></p>
+    <p><strong>NOTE: When upgrading from versions prior to 1.0.0, you will see a message for each Schedex node in the Node-RED debug<br>window. This message is to advise that the Schedex configuration changed slightly in version 1.0.0 in order to<br>accomodate days of the week when scheduling. To remedy, simply edit each Schedex node, tick the days of the week you<br>want Schedex enabled and re-deploy.</strong></p>
+    <h1 id="installation">Installation</h1>
+    <p>This node requires node 6.x+. It&#39;s tested against 6.14.2.</p>
+    <pre><code>$ cd ~/.node-red
+    $ npm install node-red-contrib-schedex
+    </code></pre><h1 id="configuration">Configuration</h1>
+    <h2 id="schedule">Schedule</h2>
+    <p>The scheduling days allow you to choose which days of the week to schedule events. Unticking all days will suspend<br>scheduling.</p>
+    <h2 id="suspending-scheduling">Suspending scheduling</h2>
+    <p>The &#39;Suspend scheduling&#39; checkbox allows you to disable time scheduling. If scheduling is suspended, Schedex will only<br>generate output events upon receipt of input &#39;on&#39; and &#39;off&#39; events (see below).</p>
+    <p>This setting is provided for the situation where you temporarily don&#39;t want time based activation and don&#39;t want to rewire your Node-RED flow.</p>
+    <blockquote>
+    <p>Note that scheduling is suspended if you do not enter an on or off time in the node configuration.</p>
+    </blockquote>
+    <h2 id="times">Times</h2>
+    <blockquote>
+    <p>Note that on and off times are independent. You only need to configure one or the other or both. You can leave the on or off time field blank in the node configuration and no output will be emitted.</p>
+    </blockquote>
+    <p>The times can be a 24 hour time or a <a href="https://github.com/mourner/suncalc">suncalc</a> event:</p>
+    <table>
+    <thead>
+    <tr>
+    <th>Time</th>
+    <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>00:00 ... 23:59</code></td>
+    <td>24hr time</td>
+    </tr>
+    <tr>
+    <td><code>sunrise</code></td>
+    <td>sunrise (top edge of the sun appears on the horizon)</td>
+    </tr>
+    <tr>
+    <td><code>sunriseEnd</code></td>
+    <td>sunrise ends (bottom edge of the sun touches the horizon)</td>
+    </tr>
+    <tr>
+    <td><code>goldenHourEnd</code></td>
+    <td>morning golden hour (soft light, best time for photography) ends</td>
+    </tr>
+    <tr>
+    <td><code>solarNoon</code></td>
+    <td>solar noon (sun is in the highest position)</td>
+    </tr>
+    <tr>
+    <td><code>goldenHour</code></td>
+    <td>evening golden hour starts</td>
+    </tr>
+    <tr>
+    <td><code>sunsetStart</code></td>
+    <td>sunset starts (bottom edge of the sun touches the horizon)</td>
+    </tr>
+    <tr>
+    <td><code>sunset</code></td>
+    <td>sunset (sun disappears below the horizon, evening civil twilight starts)</td>
+    </tr>
+    <tr>
+    <td><code>dusk</code></td>
+    <td>dusk (evening nautical twilight starts)</td>
+    </tr>
+    <tr>
+    <td><code>nauticalDusk</code></td>
+    <td>nautical dusk (evening astronomical twilight starts)</td>
+    </tr>
+    <tr>
+    <td><code>night</code></td>
+    <td>night starts (dark enough for astronomical observations)</td>
+    </tr>
+    <tr>
+    <td><code>nadir</code></td>
+    <td>nadir (darkest moment of the night, sun is in the lowest position)</td>
+    </tr>
+    <tr>
+    <td><code>nightEnd</code></td>
+    <td>night ends (morning astronomical twilight starts)</td>
+    </tr>
+    <tr>
+    <td><code>nauticalDawn</code></td>
+    <td>nautical dawn (morning nautical twilight starts)</td>
+    </tr>
+    <tr>
+    <td><code>dawn</code></td>
+    <td>dawn (morning nautical twilight ends, morning civil twilight starts)</td>
+    </tr>
+    </tbody>
+    </table>
+    <h2 id="offsets">Offsets</h2>
+    <p>The on and off time can have an offset. This is specified in minutes:</p>
+    <ul>
+    <li>-ve number brings the time forward. E.g. if the time is dusk and offset is -60, a message will be generated 60 minutes<br>before dusk.</li>
+    <li>+ve number delays the time by the specified number of minutes</li>
+    </ul>
+    <h2 id="randomisation-of-times">Randomisation of times</h2>
+    <p>Both on and off times can be randomised by ticking &quot;Use random time within offset period&quot;. For example, if you specify<br>dusk with an offset of -60 minutes, every day a message will be generated at a random time in a 60 minute window before<br>dusk.</p>
+    <h2 id="message-passthrough">Message passthrough</h2>
+    <p>When <code>Passthrough unhandled messages</code> is enabled, any message that isn&#39;t explicitly handled by Schedex will be immediately emitted.<br>To clarify, if the input payload does not match any one of the programmatic options above, along with<br>the on|off|toggle|info|info_local commands, the message will be sent to output.</p>
+    <p>With <code>Passthough unhandled messages</code>disabled (the default), any message that isn&#39;t handled by Schedex will be dropped and an error reported.</p>
+    <h2 id="inputs">Inputs</h2>
+    <p>You can wire inject nodes to the input of this node and send the following in <code>msg.payload</code>.</p>
+    <table>
+    <thead>
+    <tr>
+    <th>msg.payload</th>
+    <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>on</code></td>
+    <td>Triggers manual on mode and causes Schedex to emit the configured on event. Manual mode is reset when the next on or off time is reached</td>
+    </tr>
+    <tr>
+    <td><code>off</code></td>
+    <td>Triggers manual off mode and causes Schedex to emit the configured off event. Manual mode is reset when the next on or off time is reached</td>
+    </tr>
+    <tr>
+    <td><code>toggle</code></td>
+    <td>Triggers either the manual on or manual off mode. If the last event was the on event, toggle will cause schedex to emit the off event and vice versa. State is not maintained over restarts and deploys. Schedex assumes off upon start so the first toggle will emit the on event.</td>
+    </tr>
+    <tr>
+    <td><code>info</code></td>
+    <td>Schedex emits an object containing the on and off times in UTC format. It also contains the state which is either on or off along with the rest of this node&#39;s configuration. Note that the output message contains the actuated state. This will be null (if an event hasn&#39;t happened yet) or &#39;on&#39; or &#39;off&#39;.</td>
+    </tr>
+    <tr>
+    <td><code>info_local</code></td>
+    <td>Emits the information exactly the same as the <code>info</code> command but with the on and off times in local ISO format.</td>
+    </tr>
+    <tr>
+    <td><code>send_state</code></td>
+    <td>Causes Schedex to emit the current state as a message with either the on or off topic/payload set. If Schedex is suspended, this command emits nothing.</td>
+    </tr>
+    </tbody>
+    </table>
+    <h2 id="programmatic-control">Programmatic Control</h2>
+    <p>This node supports programmatic time control as well as configuration via the NodeRED UI.</p>
+    <p><strong>It is very important to note that properties set programmatically in this manner are transient. They will not persist<br>over a NodeRED restart or redeploy!</strong></p>
+    <p>Note that both the property-based and string-based specifications are overrides that violate the usual behavior.<br>See here for further discussion <a href="https://github.com/node-red/node-red/issues/399">https://github.com/node-red/node-red/issues/399</a>.</p>
+    <p>You can set the following:</p>
+    <table>
+    <thead>
+    <tr>
+    <th>Property</th>
+    <th>Type</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>msg.payload.suspended</code></td>
+    <td>Boolean: true will suspend scheduling, false will resume scheduling</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.ontime</code></td>
+    <td>String value as specified in the table above for time configuration</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.ontopic</code></td>
+    <td>String value emitted as the topic for the on event</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.onpayload</code></td>
+    <td>String value emitted as the payload for the on event</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.onoffset</code></td>
+    <td>Number value as specified above for Offset configuration</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.onrandomoffset</code></td>
+    <td>Boolean value as specified above in Randomisation of Times</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.offtime</code></td>
+    <td>String value as specified in the table above for time configuration</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.offtopic</code></td>
+    <td>String value emitted as the topic for the off event</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.offpayload</code></td>
+    <td>String value emitted as the payload for the off event</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.offoffset</code></td>
+    <td>Number value as specified above for Offset configuration</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.offrandomoffset</code></td>
+    <td>Boolean value as specified above in Randomisation of Times</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.mon</code></td>
+    <td>Boolean: true enables the schedule on a Monday, false disables it.</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.tue</code></td>
+    <td>Boolean: true enables the schedule on a Tuesday, false disables it.</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.wed</code></td>
+    <td>Boolean: true enables the schedule on a Wednesday, false disables it.</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.thu</code></td>
+    <td>Boolean: true enables the schedule on a Thursday, false disables it.</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.fri</code></td>
+    <td>Boolean: true enables the schedule on a Friday, false disables it.</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.sat</code></td>
+    <td>Boolean: true enables the schedule on a Saturday, false disables it.</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.sun</code></td>
+    <td>Boolean: true enables the schedule on a Sunday, false disables it.</td>
+    </tr>
+    <tr>
+    <td><code>msg.payload.passthroughunhandled</code></td>
+    <td>Boolean: true enables unhandled input messages to automatically be sent to output.</td>
+    </tr>
+    </tbody>
+    </table>
+    <p>Alternatively, you can send msg.payload as a string with the following values:</p>
+    <table>
+    <thead>
+    <tr>
+    <th>Example msg.payload</th>
+    <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>suspended true</code></td>
+    <td>true will suspend scheduling, false will resume scheduling</td>
+    </tr>
+    <tr>
+    <td><code>ontime 12:00</code></td>
+    <td>Time as specified in the table above for time configuration</td>
+    </tr>
+    <tr>
+    <td><code>ontopic my_topic</code></td>
+    <td>Sets the topic for the on event (no spaces)</td>
+    </tr>
+    <tr>
+    <td><code>onpayload my_payload</code></td>
+    <td>Sets the payload for the on event (no spaces)</td>
+    </tr>
+    <tr>
+    <td><code>onoffset 30</code></td>
+    <td>Sets the offset for the on event</td>
+    </tr>
+    <tr>
+    <td><code>onrandomoffset true</code></td>
+    <td>Sets the random offset for the on event</td>
+    </tr>
+    <tr>
+    <td><code>offtime dusk</code></td>
+    <td>Time as specified in the table above for time configuration</td>
+    </tr>
+    <tr>
+    <td><code>offtopic my_topic</code></td>
+    <td>Sets the topic for the off event (no spaces)</td>
+    </tr>
+    <tr>
+    <td><code>offpayload my_payload</code></td>
+    <td>Sets the payload for the off event (no spaces)</td>
+    </tr>
+    <tr>
+    <td><code>offoffset -30</code></td>
+    <td>Sets the offset for the off event</td>
+    </tr>
+    <tr>
+    <td><code>offrandomoffset false</code></td>
+    <td>Sets the random offset for the off event</td>
+    </tr>
+    <tr>
+    <td><code>mon false</code></td>
+    <td>Disables the schedule on a Monday</td>
+    </tr>
+    <tr>
+    <td><code>tue true</code></td>
+    <td>Enables the schedule on a Tuesday</td>
+    </tr>
+    <tr>
+    <td><code>ontime 16:30 onoffset 60 onrandomoffset true</code></td>
+    <td>Sets the time, offset and random offset for the on event</td>
+    </tr>
+    <tr>
+    <td><code>passthroughunhandled false</code></td>
+    <td>Disabled unhandled input messages automatically being sent to output</td>
+    </tr>
+    </tbody>
+    </table>
+    <h3 id="enabling-extra-debugging">Enabling extra debugging</h3>
+    <p>Install <code>node-red-contrib-config</code> and drag a config node into your workspace. Configure the node to set a global variable called <code>schedex</code><br>with a JSON value of <code>{&quot;debug&quot;: true}</code>. Also make sure that the config tickbox for <code>active</code> is unchecked. Redeploy. Now click the button on the config node.<br>This will trigger all instances of <code>schedex</code> to write extra logging to the os syslog next time they&#39;re invoked.</p>
+                <!-- END -->
 </script>

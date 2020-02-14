@@ -145,3 +145,9 @@ Alternatively, you can send msg.payload as a string with the following values:
 | `tue true`                                     | Enables the schedule on a Tuesday                                    |
 | `ontime 16:30 onoffset 60 onrandomoffset true` | Sets the time, offset and random offset for the on event             |
 | `passthroughunhandled false`                   | Disabled unhandled input messages automatically being sent to output |
+
+### Enabling extra debugging
+
+Install `node-red-contrib-config` and drag a config node into your workspace. Configure the node to set a global variable called `schedex`
+with a JSON value of `{"debug": true}`. Also make sure that the config tickbox for `active` is unchecked. Redeploy. Now click the button on the config node.
+This will trigger all instances of `schedex` to write extra logging to the os syslog next time they're invoked.
