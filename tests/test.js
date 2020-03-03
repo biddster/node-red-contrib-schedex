@@ -260,6 +260,19 @@ function testInfoCommand(infoCommand, dateFormatter) {
 }
 
 describe('schedex', function() {
+    it('issue#54 sanitised coordinates', function() {
+        const node = newNode({
+            ontime: 'dusk',
+            offtime: 'nadir',
+            offoffset: 0,
+            offrandomoffset: '0',
+            lat: '53.9533.N',
+            lon: '1.1283W'
+        });
+        // Trigger some events so the node recalculates the on time
+        node.emit('input', { payload: { suspended: true } });
+        // node.emit('input', { payload: { suspended: false } });
+    });
     it('issue#57 nadir issues', function(done) {
         this.timeout(60000 * 5);
         console.log(`\t[${this.test.title}] will take 10-ish seconds, please wait...`);
