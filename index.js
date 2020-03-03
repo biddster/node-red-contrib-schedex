@@ -186,13 +186,13 @@ module.exports = function(RED) {
             const now = node.now();
             const weekdayConfig = getWeekdayConfig();
             let day = 0;
-            event.moment = node.now().millisecond(0);
+            const start = node.now().millisecond(0);
             if (firedNow) {
                 // We've already fired today so start by examining tomorrow
-                event.moment.add(1, 'day');
+                start.add(1, 'day');
                 day = 1;
             }
-            debug(`schedule: event fired now [${firedNow}] date [${event.moment.toString()}]`);
+            debug(`schedule: event fired now [${firedNow}] date [${start.toString()}]`);
 
             let valid = false;
             const clockTime = new RegExp('(\\d+):(\\d+)', 'u').exec(event.time);
@@ -200,14 +200,16 @@ module.exports = function(RED) {
             // Today is day 0 and we try seven days into the future
             while (!valid && day <= 7) {
                 if (clockTime && clockTime.length) {
-                    event.moment = event.moment
+                    event.moment = start
+                        .clone()
                         .hour(+clockTime[1])
                         .minute(+clockTime[2])
                         .second(0);
                 } else {
                     // #57 Suncalc appears to give the best results if you
                     // calculate at midday.
-                    const sunDate = event.moment
+                    const sunDate = start
+                        .clone()
                         .hour(12)
                         .minute(0)
                         .second(0)
@@ -223,7 +225,8 @@ module.exports = function(RED) {
                     // too close to today's nadir. So we just take the time and
                     // apply that to the event's moment. That's doesn't yield a
                     // perfect suntime but it's close enough.
-                    event.moment
+                    event.moment = start
+                        .clone()
                         .hour(sunTime.getHours())
                         .minute(sunTime.getMinutes())
                         .second(sunTime.getSeconds());
@@ -240,7 +243,7 @@ module.exports = function(RED) {
                     weekdayConfig[event.moment.isoWeekday() - 1] && event.moment.isAfter(now);
                 debug(`schedule: day [${day}] [${event.moment.toString()}] valid [${valid}]`);
                 if (!valid) {
-                    event.moment.add(1, 'day');
+                    start.add(1, 'day');
                     day++;
                 }
             }
@@ -410,6 +413,13 @@ module.exports = function(RED) {
         node.schedexEvents = () => events;
         node.schedexConfig = () => config;
         node.now = () => moment();
+
+        // const error = validateConfig(config);
+        // if (error) {
+        //     node.error(error);
+        //     setStatus(Status.ERROR, { error });
+        //     return;
+        // }
 
         bootstrap();
     });
