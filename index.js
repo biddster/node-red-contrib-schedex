@@ -21,17 +21,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-module.exports = function(RED) {
-    const moment = require('moment');
+
+module.exports = function (RED) {
+    const Moment = require('moment');
     const SunCalc = require('suncalc2');
     const _ = require('lodash');
+
     const fmt = 'YYYY-MM-DD HH:mm';
 
     const Status = Object.freeze({
         SCHEDULED: Symbol('scheduled'),
         SUSPENDED: Symbol('suspended'),
         FIRED: Symbol('fired'),
-        ERROR: Symbol('error')
+        ERROR: Symbol('error'),
     });
 
     const weekdays = Object.freeze(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
@@ -57,10 +59,10 @@ module.exports = function(RED) {
     //     return error;
     // }
 
-    function toBoolean(val) {
+    const toBoolean = (val) => {
         // eslint-disable-next-line prefer-template
         return (val + '').toLowerCase() === 'true';
-    }
+    };
 
     const configuration = Object.freeze({
         ontime: String,
@@ -83,49 +85,55 @@ module.exports = function(RED) {
         lon: Number,
         lat: Number,
         suspended: toBoolean,
-        passthroughunhandled: toBoolean
+        passthroughunhandled: toBoolean,
     });
 
-    RED.nodes.registerType('schedex', function(config) {
+    RED.nodes.registerType('schedex', function (config) {
         RED.nodes.createNode(this, config);
+        // eslint-disable-next-line consistent-this
         const node = this;
         const globalConfig = { debug: false };
         const events = {};
         // Assume the node is off initially
         let lastEvent = events.off;
 
-        function getGlobalConfig() {
+        const getGlobalConfig = function () {
             return _.assign(globalConfig, node.context().global.get('schedex'));
-        }
+        };
 
-        function debug(...args) {
-            if (getGlobalConfig().debug) node.log.apply(node.log, args);
-        }
+        const debug = function (...args) {
+            if (getGlobalConfig().debug) {
+                node.log.apply(node.log, args);
+            }
+        };
 
         // Make sure these two props are proper booleans.
         config.onrandomoffset = !!config.onrandomoffset;
         config.offrandomoffset = !!config.offrandomoffset;
         // Any old versions upgraded will be undefined so convert them to boolean
         // eslint-disable-next-line no-return-assign
-        weekdays.forEach(weekday => (config[weekday] = !!config[weekday]));
+        weekdays.forEach((weekday) => (config[weekday] = !!config[weekday]));
 
-        function inverse(event) {
+        const inverse = function (event) {
             return event === events.on ? events.off : events.on;
-        }
+        };
 
-        function getWeekdayConfig() {
-            return weekdays.map(weekday => config[weekday]);
-        }
+        const getWeekdayConfig = function () {
+            return weekdays.map((weekday) => config[weekday]);
+        };
 
-        function isSuspended() {
+        const isSuspended = function () {
             return (
                 config.suspended ||
                 getWeekdayConfig().indexOf(true) === -1 ||
                 (!events.on.time && !events.off.time)
             );
-        }
+        };
 
-        function setStatus(status, { event = null, manual = false, error = null } = {}) {
+        const setStatus = function (
+            status,
+            { event = null, manual = false, error = null } = {}
+        ) {
             const message = [];
             let shape = 'dot';
             let fill = 'red';
@@ -172,32 +180,35 @@ module.exports = function(RED) {
                 } else if (!events.on.time && !events.off.time) {
                     message.push('(no on or off time)');
                 }
+
                 message.push('- manual mode only');
             } else if (status === Status.ERROR) {
                 message.push(error);
             }
+
             const text = message.join(' ');
             debug(`status: fill [${fill}] shape [${shape}] text [${text}]`);
             node.status({ fill, shape, text });
-        }
+        };
 
-        function send(event, manual) {
+        const send = function (event, manual) {
             lastEvent = event;
             debug(`send: topic [${event.topic}] payload [${event.payload}]`);
             node.send({ topic: event.topic, payload: event.payload });
             setStatus(Status.FIRED, { event, manual });
-        }
+        };
 
-        function teardownEvent(event) {
+        const teardownEvent = function (event) {
             if (event) {
                 if (event.timeout) {
                     clearTimeout(event.timeout);
                 }
+
                 event.moment = null;
             }
-        }
+        };
 
-        function schedule(event, firedNow) {
+        const schedule = function (event, firedNow) {
             teardownEvent(event);
 
             if (!event.time) {
@@ -213,6 +224,9 @@ module.exports = function(RED) {
                 start.add(1, 'day');
                 day = 1;
             }
+
+            debug(`schedule: event fired now [${firedNow}] date [${start.toString()}]`);
+
             debug(`schedule: event fired now [${firedNow}] date [${start.toString()}]`);
 
             let valid = false;
@@ -229,18 +243,14 @@ module.exports = function(RED) {
                 } else {
                     // #57 Suncalc appears to give the best results if you
                     // calculate at midday.
-                    const sunDate = start
-                        .clone()
-                        .hour(12)
-                        .minute(0)
-                        .second(0)
-                        .toDate();
+                    const sunDate = start.clone().hour(12).minute(0).second(0).toDate();
                     const sunTimes = SunCalc.getTimes(sunDate, config.lat, config.lon);
                     const sunTime = sunTimes[event.time];
                     if (!sunTime) {
                         setStatus(Status.ERROR, { error: `Invalid time [${event.time}]` });
                         return false;
                     }
+
                     // #57 Nadir appears to work differently to other sun times
                     // in that it will calculate tomorrow's nadir if the time is
                     // too close to today's nadir. So we just take the time and
@@ -268,56 +278,60 @@ module.exports = function(RED) {
                     day++;
                 }
             }
+
             if (!valid) {
                 setStatus(Status.ERROR, { error: `Failed to find valid time [${event.time}]` });
                 return false;
             }
+
             const delay = event.moment.diff(now);
             if (delay <= 0) {
                 setStatus(Status.ERROR, { error: `Negative delay` });
                 return false;
             }
+
             event.timeout = setTimeout(event.callback, delay);
             return true;
-        }
+        };
 
         /**
          * @param {string} eventName
          * @param {string} shape
          * @returns
          */
-        function setupEvent(eventName, shape) {
-            const filtered = _.pickBy(config, function(value, key) {
+        const setupEvent = function (eventName, shape) {
+            const filtered = _.pickBy(config, (value, key) => {
                 return key && key.indexOf(eventName) === 0;
             });
-            const event = _.mapKeys(filtered, function(value, key) {
+            const event = _.mapKeys(filtered, (value, key) => {
                 return key.substring(eventName.length).toLowerCase();
             });
             event.name = eventName.toUpperCase();
             event.shape = shape;
-            event.callback = function() {
+            event.callback = function () {
                 // #66 Order here is important as we need to schedule the next event
                 // before calling send as send calls setStatus. setStatus needs the
                 // latest event details so the node label is correct.
                 schedule(event, true);
                 send(event, false);
             };
-            return event;
-        }
 
-        function suspend() {
+            return event;
+        };
+
+        const suspend = function () {
             teardownEvent(events.on);
             teardownEvent(events.off);
             setStatus(Status.SUSPENDED);
-        }
+        };
 
-        function resume() {
+        const resume = function () {
             if (schedule(events.on, false) && schedule(events.off, false)) {
                 setStatus(Status.SCHEDULED);
             }
-        }
+        };
 
-        function bootstrap() {
+        const bootstrap = function () {
             teardownEvent(events.on);
             teardownEvent(events.off);
             events.on = setupEvent('on', 'dot');
@@ -327,13 +341,13 @@ module.exports = function(RED) {
             } else {
                 resume();
             }
-        }
+        };
 
-        function enumerateProgrammables(callback) {
+        const enumerateProgrammables = function (callback) {
             _.forIn(configuration, (typeFunc, name) => callback(config, name, typeFunc));
-        }
+        };
 
-        node.on('input', function(msg) {
+        node.on('input', (msg) => {
             let requiresBootstrap = false;
             let handled = false;
             if (_.isString(msg.payload)) {
@@ -353,7 +367,7 @@ module.exports = function(RED) {
                         const isOff = events.off.moment.isAfter(events.on.moment);
                         node.send({
                             topic: isOff ? events.off.topic : events.on.topic,
-                            payload: isOff ? events.off.payload : events.on.payload
+                            payload: isOff ? events.off.payload : events.on.payload,
                         });
                     }
                 } else if (msg.payload === 'info' || msg.payload === 'info_local') {
@@ -364,6 +378,7 @@ module.exports = function(RED) {
                         payload.actuatedstate =
                             lastEvent.topic === events.on.topic ? 'on' : 'off';
                     }
+
                     payload.name = config.name;
                     if (isSuspended()) {
                         payload.state = 'suspended';
@@ -379,6 +394,7 @@ module.exports = function(RED) {
                         } else {
                             payload.state = 'off';
                         }
+
                         if (msg.payload === 'info') {
                             payload.on = events.on.moment
                                 ? events.on.moment.toDate().toUTCString()
@@ -395,9 +411,10 @@ module.exports = function(RED) {
                                 : '';
                         }
                     }
+
                     node.send({ topic: 'info', payload });
                 } else {
-                    enumerateProgrammables(function(cfg, prop, typeConverter) {
+                    enumerateProgrammables((cfg, prop, typeConverter) => {
                         const match = new RegExp(`.*${prop}\\s+(\\S+)`, 'u').exec(msg.payload);
                         if (match) {
                             handled = true;
@@ -408,7 +425,8 @@ module.exports = function(RED) {
                     });
                 }
             } else {
-                enumerateProgrammables(function(cfg, prop, typeConverter) {
+                // eslint-disable-next-line prefer-arrow-callback
+                enumerateProgrammables(function (cfg, prop, typeConverter) {
                     if (Object.prototype.hasOwnProperty.call(msg.payload, prop)) {
                         handled = true;
                         const previous = cfg[prop];
@@ -417,6 +435,7 @@ module.exports = function(RED) {
                     }
                 });
             }
+
             if (!handled) {
                 if (config.passthroughunhandled) {
                     node.send(msg);
@@ -433,7 +452,7 @@ module.exports = function(RED) {
         // Bodges to allow testing
         node.schedexEvents = () => events;
         node.schedexConfig = () => config;
-        node.now = () => moment();
+        node.now = () => Moment();
 
         // const error = validateConfig(config);
         // if (error) {

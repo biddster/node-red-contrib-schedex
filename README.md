@@ -12,7 +12,7 @@ want Schedex enabled and re-deploy.**
 
 # Installation
 
-This node requires node 6.x+. It's tested against 6.14.2.
+This node requires node 10.x+. It's tested against 10.22.0.
 
     $ cd ~/.node-red
     $ npm install node-red-contrib-schedex

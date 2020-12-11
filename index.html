@@ -48,33 +48,26 @@ THE SOFTWARE.
             thu: { value: true },
             fri: { value: true },
             sat: { value: true },
-            sun: { value: true }
+            sun: { value: true },
         },
         inputs: 1,
         outputs: 1,
         icon: 'datetime.png',
-        label: function() {
+        label: function () {
             return this.name || this.ontime + ' - ' + this.offtime;
         },
         paletteLabel: 'schedex',
         align: 'left',
-        oneditprepare: function() {
-            if (
-                !$('#node-input-lat')
-                    .val()
-                    .trim() &&
-                !$('#node-input-lon')
-                    .val()
-                    .trim()
-            ) {
+        oneditprepare: function () {
+            if (!$('#node-input-lat').val().trim() && !$('#node-input-lon').val().trim()) {
                 if ('geolocation' in navigator) {
-                    navigator.geolocation.getCurrentPosition(function(position) {
+                    navigator.geolocation.getCurrentPosition(function (position) {
                         $('#node-input-lat').val(Number(position.coords.latitude.toFixed(5)));
                         $('#node-input-lon').val(Number(position.coords.longitude.toFixed(5)));
                     });
                 }
             }
-        }
+        },
     });
 </script>
 
@@ -260,13 +253,13 @@ THE SOFTWARE.
 </script>
 
 <script type="text/x-red" data-help-name="schedex">
-                <!-- START -->
+                    <!-- START -->
     <h1 id="schedex">Schedex</h1>
     <p>Scheduler for node-red which allows you to enter on/off times as 24hr clock (e.g. 01:10) or suncalc events (e.g.<br>goldenHour). It also allows you to offset times and randomise the time within the offset.</p>
     <p>Inspired by Pete Scargill&#39;s <a href="http://tech.scargill.net/big-timer/">BigTimer</a></p>
     <p><strong>NOTE: When upgrading from versions prior to 1.0.0, you will see a message for each Schedex node in the Node-RED debug<br>window. This message is to advise that the Schedex configuration changed slightly in version 1.0.0 in order to<br>accomodate days of the week when scheduling. To remedy, simply edit each Schedex node, tick the days of the week you<br>want Schedex enabled and re-deploy.</strong></p>
     <h1 id="installation">Installation</h1>
-    <p>This node requires node 6.x+. It&#39;s tested against 6.14.2.</p>
+    <p>This node requires node 10.x+. It&#39;s tested against 10.22.0.</p>
     <pre><code>$ cd ~/.node-red
     $ npm install node-red-contrib-schedex
     </code></pre><h1 id="configuration">Configuration</h1>
@@ -564,5 +557,5 @@ THE SOFTWARE.
     </table>
     <h3 id="enabling-extra-debugging">Enabling extra debugging</h3>
     <p>Install <code>node-red-contrib-config</code> and drag a config node into your workspace. Configure the node to set a global variable called <code>schedex</code><br>with a JSON value of <code>{&quot;debug&quot;: true}</code>. Also make sure that the config tickbox for <code>active</code> is unchecked. Redeploy. Now click the button on the config node.<br>This will trigger all instances of <code>schedex</code> to write extra logging to the os syslog next time they&#39;re invoked.</p>
-                <!-- END -->
+                    <!-- END -->
 </script>
