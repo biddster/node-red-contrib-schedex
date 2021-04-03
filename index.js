@@ -38,27 +38,6 @@ module.exports = function (RED) {
 
     const weekdays = Object.freeze(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
 
-    // function validateConfig(config) {
-    //     const error = _.reduce(
-    //         config,
-    //         (acc, value, key) => {
-    //             try {
-    //                 if (configuration[key]) {
-    //                     const typeCast = configuration[key];
-    //                     config[key] = typeCast(value);
-    //                 }
-    //             } catch (e) {
-    //                 if (!acc.length) {
-    //                     return `Invalid ${key} config, ${value} should be a ${configuration[key]}`;
-    //                 }
-    //             }
-    //             return acc;
-    //         },
-    //         ''
-    //     );
-    //     return error;
-    // }
-
     const toBoolean = (val) => {
         // eslint-disable-next-line prefer-template
         return (val + '').toLowerCase() === 'true';
@@ -87,6 +66,21 @@ module.exports = function (RED) {
         suspended: toBoolean,
         passthroughunhandled: toBoolean,
     });
+
+    const validateConfig = function (config) {
+        for (const key of Object.keys(config)) {
+            try {
+                if (configuration[key]) {
+                    const typeCast = configuration[key];
+                    config[key] = typeCast(config[key]);
+                }
+            } catch (e) {
+                return `Invalid ${key} config, ${config[key]} should be a ${configuration[key].name}`;
+            }
+        }
+
+        return null;
+    };
 
     RED.nodes.registerType('schedex', function (config) {
         RED.nodes.createNode(this, config);
@@ -454,13 +448,14 @@ module.exports = function (RED) {
         node.schedexConfig = () => config;
         node.now = () => Moment();
 
-        // const error = validateConfig(config);
-        // if (error) {
-        //     node.error(error);
-        //     setStatus(Status.ERROR, { error });
-        //     return;
-        // }
+        const error = validateConfig(config);
+        if (error) {
+            node.error(error);
+            setStatus(Status.ERROR, { error });
+        } else {
+            bootstrap();
+        }
 
-        bootstrap();
+        // bootstrap();
     });
 };
